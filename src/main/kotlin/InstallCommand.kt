@@ -111,6 +111,7 @@ class InstallCommand : CoreCliktCommand(name = "install") {
     private fun select(commands: List<Command>): Map<String, Command> {
         if (commands.isEmpty()) fail("No commands to install were found. Only applications and native executables can be installed.")
         return commands.groupBy { it.name }.mapValues { (name, candidates) ->
+            if (name.isEmpty() || name.startsWith(".") || '/' in name) fail("Cannot install a command named $name")
             val preferred = candidates.filter { it.platform == Platform.NATIVE }.ifEmpty { candidates }
             if (preferred.size > 1) fail("More than one command is named $name")
             if (preferred.size < candidates.size) {

@@ -30,7 +30,8 @@ class Stager(private val staging: Path, private val destination: Path) {
             copyDirectory(command.distribution, staging.resolve(directory))
             directory
         }
-        val script = distribution.resolve(command.script)
+        val script = distribution.resolve(command.script).normalize()
+        if (!script.startsWith(distribution)) fail("Cannot install ${command.script} outside its distribution")
         val javaHome = command.javaHome?.let(Java::runtimeBuiltWith) ?: return script
         return launcher(
             command.name,
