@@ -15,6 +15,6 @@ class Kotlinstall : CoreCliktCommand(name = "kotlinstall") {
 }
 
 fun main(args: Array<String>) = Kotlinstall()
-    .subcommands(InstallCommand(), ListCommand(), UninstallCommand())
+    .subcommands(InstallCommand(), UpdateCommand(), UninstallCommand(), ListCommand())
     .context { exitProcess = { status -> kotlin.system.exitProcess(status) } }
     .main(args)

@@ -8,8 +8,8 @@ class ListCommand : CoreCliktCommand(name = "list") {
 
     override fun run() {
         Home.current().receipts().forEach { receipt ->
-            echo(receipt)
-            receipt.commands.forEach { echo("    $it") }
+            inform(receipt)
+            receipt.commands.forEach { inform("    $it") }
         }
     }
 }
