@@ -17,6 +17,7 @@ import kotlin.io.path.deleteRecursively
 import kotlin.io.path.isDirectory
 import kotlin.io.path.pathString
 
+@OptIn(ExperimentalPathApi::class)
 class InstallCommand : CoreCliktCommand(name = "install") {
     override fun help(context: Context) = "Build a Kotlin program from a Git repository and install its commands"
 
@@ -33,14 +34,10 @@ class InstallCommand : CoreCliktCommand(name = "install") {
 
     private val force by option("--force", help = "Reinstall even if up to date, and take over commands of other packages").flag()
 
-    @OptIn(ExperimentalPathApi::class)
     override fun run() {
         val home = Home.current()
         val source = locate(repository)
-        val name = source.substringAfterLast('/').substringAfterLast(':').removeSuffix(".git")
-        if (name.isEmpty() || name.startsWith(".") || !name.all { it.isLetterOrDigit() || it in "-_." }) {
-            fail("Cannot name a package after $repository")
-        }
+        val name = packageName(source)
         val host = Host.current()
         if (platform == Platform.NATIVE && host == null) fail("Native commands cannot be built on this host")
         val installed = home.receipt(name)
@@ -55,38 +52,54 @@ class InstallCommand : CoreCliktCommand(name = "install") {
                 echo("$installed is already installed. Use --force to reinstall it.")
                 return
             }
-            val platforms = platform?.let(::setOf) ?: Platform.entries.toSet()
-            val commands = select(
-                when {
-                    KotlinToolchain.isProject(checkout) -> KotlinToolchain.build(checkout, platforms, host)
-                    Gradle.isProject(checkout) -> Gradle.build(checkout, work, platforms, host)
-                    else -> fail("$source is neither a Gradle project nor a Kotlin Toolchain project")
-                },
-            )
+            val commands = select(build(checkout, work, host))
             val receipt = Receipt(name, source, reference, platform, revision, commands.keys.sorted())
-            home.lock {
-                val conflicts = home.conflicts(name, commands.keys).joinToString(", ") { command ->
-                    home.owner(command)?.let { "$command (installed by $it)" } ?: command
-                }
-                if (conflicts.isNotEmpty()) {
-                    if (!force) fail("${home.bin} already has $conflicts. Use --force to replace them.")
-                    echo("Replacing $conflicts")
-                }
-                val staging = home.stage(name)
-                try {
-                    val stager = Stager(staging, home.packages.resolve(name))
-                    home.install(receipt, staging, commands.mapValues { (_, command) -> stager.add(command) })
-                } finally {
-                    staging.deleteRecursively()
-                }
-            }
-            echo("Installed $receipt")
-            receipt.commands.forEach { echo("    ${home.bin.resolve(it)}") }
-            if (System.getenv("PATH").orEmpty().split(':').none { it.isNotEmpty() && Path(it).toAbsolutePath().normalize() == home.bin }) {
-                warn("${home.bin} is not in PATH. Add it to PATH to run the installed commands.")
-            }
+            home.lock { place(home, receipt, commands) }
+            report(home, receipt)
         } finally {
             work.deleteRecursively()
+        }
+    }
+
+    private fun packageName(source: String): String {
+        val name = source.substringAfterLast('/').substringAfterLast(':').removeSuffix(".git")
+        if (name.isEmpty() || name.startsWith(".") || !name.all { it.isLetterOrDigit() || it in "-_." }) {
+            fail("Cannot name a package after $repository")
+        }
+        return name
+    }
+
+    private fun build(checkout: Path, work: Path, host: Host?): List<Command> {
+        val platforms = platform?.let(::setOf) ?: Platform.entries.toSet()
+        return when {
+            KotlinToolchain.isProject(checkout) -> KotlinToolchain.build(checkout, platforms, host)
+            Gradle.isProject(checkout) -> Gradle.build(checkout, work, platforms, host)
+            else -> fail("$repository is neither a Gradle project nor a Kotlin Toolchain project")
+        }
+    }
+
+    private fun place(home: Home, receipt: Receipt, commands: Map<String, Command>) {
+        val conflicts = home.conflicts(receipt.name, commands.keys).joinToString(", ") { command ->
+            home.owner(command)?.let { "$command (installed by $it)" } ?: command
+        }
+        if (conflicts.isNotEmpty()) {
+            if (!force) fail("${home.bin} already has $conflicts. Use --force to replace them.")
+            echo("Replacing $conflicts")
+        }
+        val staging = home.stage(receipt.name)
+        try {
+            val stager = Stager(staging, home.packages.resolve(receipt.name))
+            home.install(receipt, staging, commands.mapValues { (_, command) -> stager.add(command) })
+        } finally {
+            staging.deleteRecursively()
+        }
+    }
+
+    private fun report(home: Home, receipt: Receipt) {
+        echo("Installed $receipt")
+        receipt.commands.forEach { echo("    ${home.bin.resolve(it)}") }
+        if (System.getenv("PATH").orEmpty().split(':').none { it.isNotEmpty() && Path(it).toAbsolutePath().normalize() == home.bin }) {
+            warn("${home.bin} is not in PATH. Add it to run the installed commands, for example: export PATH=\"${home.bin}:\$PATH\"")
         }
     }
 

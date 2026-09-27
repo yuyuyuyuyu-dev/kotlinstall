@@ -38,8 +38,8 @@ object KotlinToolchain {
 
     private fun cli(project: Path): List<String> {
         if (project.resolve("kotlin").isRegularFile()) return listOf("sh", "kotlin")
-        val version = runCatching { capture(listOf("kotlin", "--version")) }.getOrDefault("")
-        if (!version.startsWith("Kotlin Toolchain")) {
+        val version = runCatching { capture(listOf("kotlin", "--version"), errors = ProcessBuilder.Redirect.DISCARD) }.getOrDefault("")
+        if ("Kotlin Toolchain" !in version) {
             fail("The project has no kotlin wrapper script, and the kotlin command is not the Kotlin Toolchain CLI")
         }
         return listOf("kotlin")

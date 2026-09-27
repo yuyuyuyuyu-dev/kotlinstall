@@ -8,8 +8,12 @@ fun execute(command: List<String>, directory: Path? = null) {
     verify(command, process.waitFor())
 }
 
-fun capture(command: List<String>, directory: Path? = null): String {
-    val process = start(ProcessBuilder(command).redirectError(ProcessBuilder.Redirect.INHERIT), directory)
+fun capture(
+    command: List<String>,
+    directory: Path? = null,
+    errors: ProcessBuilder.Redirect = ProcessBuilder.Redirect.INHERIT,
+): String {
+    val process = start(ProcessBuilder(command).redirectError(errors), directory)
     process.outputStream.close()
     val output = process.inputStream.bufferedReader().use { it.readText() }
     verify(command, process.waitFor())

@@ -134,7 +134,7 @@ class Home(root: Path) {
         if (!link.exists(LinkOption.NOFOLLOW_LINKS)) return
         val owner = owner(command)
         if (owner == name) return
-        if (link.isDirectory(LinkOption.NOFOLLOW_LINKS)) fail("$link is a directory")
+        if (link.isDirectory(LinkOption.NOFOLLOW_LINKS)) fail("Cannot replace the directory $link")
         link.deleteIfExists()
         val receipt = owner?.let(::receipt) ?: return
         val commands = receipt.commands - command
