@@ -3,7 +3,7 @@ import java.io.IOException
 import java.nio.file.Files
 import kotlin.system.exitProcess
 
-val usage = "Usage: install.main.kts [--git URL] [--branch BRANCH | --tag TAG | --rev REV] [--force]"
+val usage = "Usage: install-kotlinstall.main.kts [--git URL] [--branch BRANCH | --tag TAG | --rev REV] [--force]"
 
 class Failure(message: String) : Exception(message)
 
