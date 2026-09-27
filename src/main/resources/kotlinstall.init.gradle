@@ -1,0 +1,72 @@
+import org.gradle.api.distribution.DistributionContainer
+import org.gradle.api.plugins.JavaPluginExtension
+import org.gradle.jvm.application.tasks.CreateStartScripts
+import org.gradle.jvm.toolchain.JavaToolchainService
+
+def parameters = gradle.startParameter.projectProperties
+def manifest = new File(parameters['kotlinstall.manifest'])
+def platforms = parameters['kotlinstall.platforms'].tokenize(',')
+def host = parameters['kotlinstall.host']
+def entries = []
+def required = []
+
+def javaHome = { project ->
+    def java = project.extensions.findByType(JavaPluginExtension)
+    def toolchains = project.extensions.findByType(JavaToolchainService)
+    if (java != null && toolchains != null && java.toolchain.languageVersion.present) {
+        return toolchains.launcherFor(java.toolchain).get().metadata.installationPath.asFile.absolutePath
+    }
+    System.getProperty('java.home')
+}
+
+def isExecutable = { binary ->
+    def type = binary.getClass()
+    while (type != null) {
+        if (type.name == 'org.jetbrains.kotlin.gradle.plugin.mpp.Executable') {
+            return true
+        }
+        type = type.superclass
+    }
+    false
+}
+
+gradle.projectsEvaluated {
+    gradle.rootProject.allprojects.each { project ->
+        if (platforms.contains('jvm')) {
+            def application = project.plugins.hasPlugin('application')
+            project.extensions.findByType(DistributionContainer)?.each { distribution ->
+                def main = distribution.name == 'main'
+                def install = project.tasks.findByName(main ? 'installDist' : "install${distribution.name.capitalize()}Dist")
+                def script = project.tasks.findByName(main ? 'startScripts' : "startScriptsFor${distribution.name.capitalize()}")
+                if ((main || !application) && install != null && script instanceof CreateStartScripts) {
+                    required << install
+                    entries << ['jvm', install.destinationDir.absolutePath, "${script.executableDir}/${script.applicationName}", javaHome(project)].join('\t')
+                }
+            }
+        }
+        if (platforms.contains('native') && host) {
+            def kotlin = project.extensions.findByName('kotlin')
+            if (kotlin != null && kotlin.hasProperty('targets')) {
+                kotlin.targets.each { target ->
+                    if (target.hasProperty('konanTarget') && target.konanTarget.name == host) {
+                        target.binaries.each { binary ->
+                            if (isExecutable(binary) && binary.buildType.name() == 'RELEASE') {
+                                required << project.tasks.named(binary.linkTaskName)
+                                entries << ['native', binary.outputFile.absolutePath].join('\t')
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+gradle.rootProject { root ->
+    root.tasks.register('kotlinstall') {
+        dependsOn { required }
+        doLast {
+            manifest.text = entries.join('\n')
+        }
+    }
+}
