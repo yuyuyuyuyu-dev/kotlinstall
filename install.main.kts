@@ -1,0 +1,63 @@
+import java.io.File
+import java.io.IOException
+import java.nio.file.Files
+import kotlin.system.exitProcess
+
+val usage = "Usage: install.main.kts [--git URL] [--branch BRANCH | --tag TAG | --rev REV] [--force]"
+
+class Failure(message: String) : Exception(message)
+
+fun run(directory: File?, vararg command: String) {
+    val status = try {
+        ProcessBuilder(*command).directory(directory).inheritIO().start().waitFor()
+    } catch (e: IOException) {
+        throw Failure("Could not run ${command.first()}: ${e.message}")
+    }
+    if (status != 0) throw Failure("${command.joinToString(" ")} failed with exit code $status")
+}
+
+fun value(arguments: Iterator<String>, option: String) =
+    if (arguments.hasNext()) arguments.next() else throw Failure("$option needs a value\n$usage")
+
+fun install(arguments: Iterator<String>) {
+    var repository = "https://github.com/yuyuyuyuyu-dev/kotlinstall.git"
+    val reference = mutableListOf<String>()
+    val options = mutableListOf<String>()
+    while (arguments.hasNext()) {
+        when (val argument = arguments.next()) {
+            "--git" -> repository = value(arguments, argument)
+            "--branch", "--tag", "--rev" -> {
+                if (reference.isNotEmpty()) throw Failure("Only one of --branch, --tag and --rev can be given\n$usage")
+                reference += listOf(argument, value(arguments, argument))
+            }
+            "--force" -> options += argument
+            "-h", "--help" -> return println(usage)
+            else -> throw Failure("Unknown argument $argument\n$usage")
+        }
+    }
+    val work = Files.createTempDirectory("kotlinstall-").toFile()
+    try {
+        val source = File(work, "kotlinstall")
+        println("Bootstrapping kotlinstall")
+        when (reference.firstOrNull()) {
+            null -> run(null, "git", "clone", "--depth", "1", repository, source.path)
+            "--rev" -> {
+                run(null, "git", "clone", "--no-checkout", repository, source.path)
+                run(source, "git", "-c", "advice.detachedHead=false", "checkout", "--detach", reference.last())
+            }
+            else -> run(null, "git", "-c", "advice.detachedHead=false", "clone", "--depth", "1", "--branch", reference.last(), repository, source.path)
+        }
+        run(source, "sh", "gradlew", "--no-daemon", "--quiet", "installDist")
+        println("Installing kotlinstall")
+        run(null, File(source, "build/install/kotlinstall/bin/kotlinstall").path, "install", repository, *reference.toTypedArray(), *options.toTypedArray())
+    } finally {
+        work.deleteRecursively()
+    }
+}
+
+try {
+    install(args.iterator())
+} catch (failure: Failure) {
+    System.err.println("Error: ${failure.message}")
+    exitProcess(1)
+}
