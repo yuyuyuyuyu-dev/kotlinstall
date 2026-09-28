@@ -19,6 +19,17 @@ fun run(directory: File?, vararg command: String) {
 fun value(arguments: Iterator<String>, option: String) =
     if (arguments.hasNext()) arguments.next() else throw Failure("$option needs a value\n$usage")
 
+fun target(): String {
+    val os = System.getProperty("os.name")
+    val arch = System.getProperty("os.arch")
+    return when {
+        os.startsWith("Mac") && arch in setOf("aarch64", "arm64") -> "macosArm64"
+        os.startsWith("Mac") && arch in setOf("x86_64", "amd64") -> "macosX64"
+        os.startsWith("Linux") && arch in setOf("x86_64", "amd64") -> "linuxX64"
+        else -> throw Failure("Kotlin/Native cannot build programs on this host")
+    }
+}
+
 fun install(arguments: Iterator<String>) {
     var repository = "https://github.com/yuyuyuyuyu-dev/kotlinstall.git"
     val reference = mutableListOf<String>()
@@ -35,6 +46,7 @@ fun install(arguments: Iterator<String>) {
             else -> throw Failure("Unknown argument $argument\n$usage")
         }
     }
+    val target = target()
     val work = Files.createTempDirectory("kotlinstall-").toFile()
     try {
         val source = File(work, "kotlinstall")
@@ -47,9 +59,9 @@ fun install(arguments: Iterator<String>) {
             }
             else -> run(null, "git", "-c", "advice.detachedHead=false", "clone", "--depth", "1", "--branch", reference.last(), repository, source.path)
         }
-        run(source, "sh", "gradlew", "--no-daemon", "--quiet", "installDist")
+        run(source, "sh", "gradlew", "--no-daemon", "--quiet", "linkReleaseExecutable${target.replaceFirstChar(Char::uppercaseChar)}")
         println("Installing kotlinstall")
-        run(null, File(source, "build/install/kotlinstall/bin/kotlinstall").path, "install", repository, *reference.toTypedArray(), *options.toTypedArray())
+        run(null, File(source, "build/bin/$target/releaseExecutable/kotlinstall.kexe").path, "install", repository, *reference.toTypedArray(), *options.toTypedArray())
     } finally {
         work.deleteRecursively()
     }

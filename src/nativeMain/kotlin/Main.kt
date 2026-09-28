@@ -7,11 +7,9 @@ import com.github.ajalt.clikt.core.main
 import com.github.ajalt.clikt.core.subcommands
 
 class Kotlinstall : CoreCliktCommand(name = "kotlinstall") {
-    override fun help(context: Context) = "Install Kotlin programs from Git repositories"
+    override fun help(context: Context) = "Install Kotlin/Native programs from Git repositories"
 
-    override fun run() {
-        if (System.getProperty("os.name").startsWith("Windows")) fail("Windows is not supported")
-    }
+    override fun run() = Unit
 }
 
 fun main(args: Array<String>) = Kotlinstall()

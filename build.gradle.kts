@@ -1,26 +1,27 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
-    kotlin("jvm") version "2.4.20"
-    application
-}
-
-dependencies {
-    implementation("com.github.ajalt.clikt:clikt-core:5.1.0")
-}
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    kotlin("multiplatform") version "2.4.20"
 }
 
 kotlin {
-    compilerOptions {
-        jvmTarget = JvmTarget.JVM_17
-        freeCompilerArgs.add("-Xjdk-release=17")
+    listOf(macosArm64(), macosX64(), linuxX64()).forEach { target ->
+        target.binaries.executable {
+            entryPoint = "dev.yuyuyuyuyu.kotlinstall.main"
+        }
     }
-}
 
-application {
-    mainClass = "dev.yuyuyuyuyu.kotlinstall.MainKt"
+    compilerOptions {
+        optIn.addAll(
+            "kotlin.concurrent.atomics.ExperimentalAtomicApi",
+            "kotlin.experimental.ExperimentalNativeApi",
+            "kotlinx.cinterop.ExperimentalForeignApi",
+        )
+    }
+
+    sourceSets {
+        nativeMain.dependencies {
+            implementation("com.github.ajalt.clikt:clikt-core:5.1.0")
+            implementation("com.squareup.okio:okio:3.18.2")
+            implementation("io.matthewnelson.kmp-process:process:0.5.0")
+        }
+    }
 }

@@ -15,7 +15,7 @@ class UninstallCommand : CoreCliktCommand(name = "uninstall") {
         home.lock {
             val receipts = names.distinct().map { name -> home.receipt(name) ?: fail("$name is not installed") }
             receipts.forEach { receipt ->
-                home.uninstall(receipt).forEach { inform("Removed ${home.bin.resolve(it)}") }
+                home.uninstall(receipt).forEach { inform("Removed ${home.bin / it}") }
                 inform("Uninstalled ${receipt.name}")
             }
         }

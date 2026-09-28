@@ -1,6 +1,6 @@
 package dev.yuyuyuyuyu.kotlinstall
 
-import java.nio.file.Path
+import okio.Path
 
 data class Reference(val kind: Kind, val value: String) {
     enum class Kind(val option: String) {
