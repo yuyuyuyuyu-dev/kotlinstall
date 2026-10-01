@@ -20,7 +20,8 @@ class Installer(private val home: Home, private val force: Boolean) {
                 inform("$installed is up to date. Use --force to reinstall it.")
                 return
             }
-            val commands = select(build(source, checkout, work, host), host)
+            if (!Gradle.isProject(checkout)) fail("$source is not a Gradle project")
+            val commands = select(Gradle.build(checkout, work, host), host)
             val receipt = Receipt(name, source, reference, revision, commands.keys.sorted())
             home.lock { place(receipt, commands) }
             report(receipt)
@@ -35,12 +36,6 @@ class Installer(private val home: Home, private val force: Boolean) {
             fail("Cannot name a package after $source")
         }
         return name
-    }
-
-    private fun build(source: String, checkout: Path, work: Path, host: Host): List<Command> = when {
-        KotlinToolchain.isProject(checkout) -> KotlinToolchain.build(checkout, host)
-        Gradle.isProject(checkout) -> Gradle.build(checkout, work, host)
-        else -> fail("$source is neither a Gradle project nor a Kotlin Toolchain project")
     }
 
     private fun select(commands: List<Command>, host: Host): Map<String, Command> {

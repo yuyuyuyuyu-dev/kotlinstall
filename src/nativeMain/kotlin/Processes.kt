@@ -19,13 +19,13 @@ fun execute(command: List<String>, directory: Path? = null) {
     verify(command, status)
 }
 
-fun capture(command: List<String>, directory: Path? = null, showErrors: Boolean = true): String {
+fun capture(command: List<String>, directory: Path? = null): String {
     val output = StringBuilder()
     val closed = AtomicInt(0)
     val process = start(command, directory, Stdio.Null, Stdio.Pipe)
     val status = try {
         process.stdoutFeed { line -> if (line == null) closed.incrementAndFetch() else output.appendLine(line) }
-            .stderrFeed { line -> if (line == null) closed.incrementAndFetch() else if (showErrors) printError(line) }
+            .stderrFeed { line -> if (line == null) closed.incrementAndFetch() else printError(line) }
             .waitFor()
             .also { while (closed.load() < 2) usleep(1000u) }
     } finally {

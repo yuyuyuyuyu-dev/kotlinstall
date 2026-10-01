@@ -11,7 +11,7 @@ import com.github.ajalt.clikt.parameters.options.option
 import okio.Path.Companion.toPath
 
 class InstallCommand : CoreCliktCommand(name = "install") {
-    override fun help(context: Context) = "Build a Kotlin/Native program from a Git repository and install its commands"
+    override fun help(context: Context) = "Build a Kotlin/Native Gradle project from a Git repository and install its commands"
 
     private val repository by argument("URL", help = "URL or path of the Git repository")
 
