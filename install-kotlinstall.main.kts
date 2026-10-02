@@ -67,7 +67,6 @@ fun install(arguments: Iterator<String>) {
         }
         announce("Building a temporary kotlinstall")
         run(source, "sh", "gradlew", "--no-daemon", "linkReleaseExecutable${target.replaceFirstChar(Char::uppercaseChar)}")
-        announce("Installing kotlinstall with the temporary kotlinstall")
         run(null, File(source, "build/bin/$target/releaseExecutable/kotlinstall.kexe").path, "install", repository, *reference.toTypedArray(), *options.toTypedArray())
     } finally {
         work.deleteRecursively()
