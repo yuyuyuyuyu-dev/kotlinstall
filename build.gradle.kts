@@ -8,7 +8,7 @@ plugins {
 kotlin {
     val host = when (HostManager.host) {
         KonanTarget.MACOS_ARM64 -> macosArm64()
-        KonanTarget.MACOS_X64 -> @Suppress("DEPRECATION") macosX64()
+        KonanTarget.MACOS_X64 -> macosX64()
         KonanTarget.LINUX_X64 -> linuxX64()
         else -> error("Kotlin/Native cannot build kotlinstall on this host")
     }

@@ -21,13 +21,13 @@ object Git {
             )
             Reference.Kind.BRANCH, Reference.Kind.TAG -> execute(
                 listOf(
-                    "git", "-c", "advice.detachedHead=false", "clone", "--depth", "1", "--branch", reference.value,
+                    "git", "clone", "--depth", "1", "--branch", reference.value,
                     "--recurse-submodules", "--shallow-submodules", repository, destination,
                 ),
             )
             Reference.Kind.REV -> {
                 execute(listOf("git", "clone", "--no-checkout", repository, destination))
-                execute(listOf("git", "-c", "advice.detachedHead=false", "checkout", "--detach", reference.value), directory)
+                execute(listOf("git", "checkout", "--detach", reference.value), directory)
                 execute(listOf("git", "submodule", "update", "--init", "--recursive"), directory)
             }
         }

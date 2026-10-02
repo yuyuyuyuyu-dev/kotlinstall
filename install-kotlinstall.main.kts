@@ -61,9 +61,9 @@ fun install(arguments: Iterator<String>) {
             null -> run(null, "git", "clone", "--depth", "1", repository, source.path)
             "--rev" -> {
                 run(null, "git", "clone", "--no-checkout", repository, source.path)
-                run(source, "git", "-c", "advice.detachedHead=false", "checkout", "--detach", reference.last())
+                run(source, "git", "checkout", "--detach", reference.last())
             }
-            else -> run(null, "git", "-c", "advice.detachedHead=false", "clone", "--depth", "1", "--branch", reference.last(), repository, source.path)
+            else -> run(null, "git", "clone", "--depth", "1", "--branch", reference.last(), repository, source.path)
         }
         announce("Building a temporary kotlinstall")
         run(source, "sh", "gradlew", "--no-daemon", "linkReleaseExecutable${target.replaceFirstChar(Char::uppercaseChar)}")
