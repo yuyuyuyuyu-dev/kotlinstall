@@ -15,14 +15,17 @@ class Installer(private val home: Home, private val force: Boolean) {
         val work = createTemporaryDirectory(FileSystem.SYSTEM_TEMPORARY_DIRECTORY, "kotlinstall-")
         try {
             val checkout = work / name
+            announce("Getting the source code of $name")
             val revision = Git.clone(source, reference, checkout)
             if (installed != null && installed.isFrom(source) && installed.revision == revision && !force) {
                 inform("$installed is up to date. Use --force to reinstall it.")
                 return
             }
             if (!Gradle.isProject(checkout)) fail("$source is not a Gradle project")
+            announce("Building $name")
             val commands = select(Gradle.build(checkout, work, host), host)
             val receipt = Receipt(name, source, reference, revision, commands.keys.sorted())
+            announce("Installing $name")
             home.lock { place(receipt, commands) }
             report(receipt)
         } finally {

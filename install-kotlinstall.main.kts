@@ -50,7 +50,7 @@ fun install(arguments: Iterator<String>) {
     val work = Files.createTempDirectory("kotlinstall-").toFile()
     try {
         val source = File(work, "kotlinstall")
-        println("Bootstrapping kotlinstall")
+        println("==> Getting the source code of kotlinstall")
         when (reference.firstOrNull()) {
             null -> run(null, "git", "clone", "--depth", "1", repository, source.path)
             "--rev" -> {
@@ -59,8 +59,9 @@ fun install(arguments: Iterator<String>) {
             }
             else -> run(null, "git", "-c", "advice.detachedHead=false", "clone", "--depth", "1", "--branch", reference.last(), repository, source.path)
         }
+        println("==> Building a temporary kotlinstall")
         run(source, "sh", "gradlew", "--no-daemon", "linkReleaseExecutable${target.replaceFirstChar(Char::uppercaseChar)}")
-        println("Installing kotlinstall")
+        println("==> Installing kotlinstall with the temporary kotlinstall")
         run(null, File(source, "build/bin/$target/releaseExecutable/kotlinstall.kexe").path, "install", repository, *reference.toTypedArray(), *options.toTypedArray())
     } finally {
         work.deleteRecursively()
