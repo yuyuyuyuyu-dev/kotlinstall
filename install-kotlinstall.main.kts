@@ -16,7 +16,7 @@ fun run(directory: File?, vararg command: String) {
     if (status != 0) throw Failure("${command.joinToString(" ")} failed with exit code $status")
 }
 
-fun announce(phase: String) = println("\n==> $phase")
+fun announce(phase: String) = println("\n==> $phase\n")
 
 fun value(arguments: Iterator<String>, option: String) =
     if (arguments.hasNext()) arguments.next() else throw Failure("$option needs a value\n$usage")

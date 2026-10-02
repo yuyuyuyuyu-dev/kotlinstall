@@ -6,7 +6,7 @@ import platform.posix.stderr
 
 fun inform(message: Any) = println(message)
 
-fun announce(phase: String) = println("\n==> $phase")
+fun announce(phase: String) = println("\n==> $phase\n")
 
 fun warn(message: String) = printError("\nWarning: $message")
 
