@@ -59,7 +59,7 @@ fun install(arguments: Iterator<String>) {
             }
             else -> run(null, "git", "-c", "advice.detachedHead=false", "clone", "--depth", "1", "--branch", reference.last(), repository, source.path)
         }
-        run(source, "sh", "gradlew", "--no-daemon", "--quiet", "linkReleaseExecutable${target.replaceFirstChar(Char::uppercaseChar)}")
+        run(source, "sh", "gradlew", "--no-daemon", "linkReleaseExecutable${target.replaceFirstChar(Char::uppercaseChar)}")
         println("Installing kotlinstall")
         run(null, File(source, "build/bin/$target/releaseExecutable/kotlinstall.kexe").path, "install", repository, *reference.toTypedArray(), *options.toTypedArray())
     } finally {
