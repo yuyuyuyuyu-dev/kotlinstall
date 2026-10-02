@@ -6,7 +6,11 @@ import platform.posix.stderr
 
 fun inform(message: Any) = println(message)
 
-fun announce(phase: String) = println("\n==> $phase\n")
+fun announce(phase: String) {
+    val title = "==> $phase"
+    val rule = "=".repeat(title.length)
+    println("\n$rule\n$title\n$rule")
+}
 
 fun warn(message: String) = printError("\nWarning: $message")
 
