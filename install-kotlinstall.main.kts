@@ -16,6 +16,8 @@ fun run(directory: File?, vararg command: String) {
     if (status != 0) throw Failure("${command.joinToString(" ")} failed with exit code $status")
 }
 
+fun announce(phase: String) = println("\n==> $phase")
+
 fun value(arguments: Iterator<String>, option: String) =
     if (arguments.hasNext()) arguments.next() else throw Failure("$option needs a value\n$usage")
 
@@ -50,7 +52,7 @@ fun install(arguments: Iterator<String>) {
     val work = Files.createTempDirectory("kotlinstall-").toFile()
     try {
         val source = File(work, "kotlinstall")
-        println("==> Getting the source code of kotlinstall")
+        announce("Getting the source code of kotlinstall")
         when (reference.firstOrNull()) {
             null -> run(null, "git", "clone", "--depth", "1", repository, source.path)
             "--rev" -> {
@@ -59,9 +61,9 @@ fun install(arguments: Iterator<String>) {
             }
             else -> run(null, "git", "-c", "advice.detachedHead=false", "clone", "--depth", "1", "--branch", reference.last(), repository, source.path)
         }
-        println("==> Building a temporary kotlinstall")
+        announce("Building a temporary kotlinstall")
         run(source, "sh", "gradlew", "--no-daemon", "linkReleaseExecutable${target.replaceFirstChar(Char::uppercaseChar)}")
-        println("==> Installing kotlinstall with the temporary kotlinstall")
+        announce("Installing kotlinstall with the temporary kotlinstall")
         run(null, File(source, "build/bin/$target/releaseExecutable/kotlinstall.kexe").path, "install", repository, *reference.toTypedArray(), *options.toTypedArray())
     } finally {
         work.deleteRecursively()
