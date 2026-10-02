@@ -1,12 +1,19 @@
+import org.jetbrains.kotlin.konan.target.HostManager
+import org.jetbrains.kotlin.konan.target.KonanTarget
+
 plugins {
     kotlin("multiplatform") version "2.4.20"
 }
 
 kotlin {
-    listOf(macosArm64(), macosX64(), linuxX64()).forEach { target ->
-        target.binaries.executable {
-            entryPoint = "dev.yuyuyuyuyu.kotlinstall.main"
-        }
+    val host = when (HostManager.host) {
+        KonanTarget.MACOS_ARM64 -> macosArm64()
+        KonanTarget.MACOS_X64 -> @Suppress("DEPRECATION") macosX64()
+        KonanTarget.LINUX_X64 -> linuxX64()
+        else -> error("Kotlin/Native cannot build kotlinstall on this host")
+    }
+    host.binaries.executable {
+        entryPoint = "dev.yuyuyuyuyu.kotlinstall.main"
     }
 
     compilerOptions {
