@@ -16,8 +16,6 @@ object Gradle {
             gradle + listOf(
                 "--no-daemon",
                 "--init-script", script.toString(),
-                "-Dorg.gradle.configuration-cache=false",
-                "-Dorg.gradle.configureondemand=false",
                 "-Pkotlinstall.manifest=$manifest",
                 "-Pkotlinstall.host=${host.konanTarget}",
                 "kotlinstall",
