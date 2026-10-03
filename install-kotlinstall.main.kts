@@ -8,7 +8,7 @@ val usage = "Usage: install-kotlinstall.main.kts [--git URL] [--branch BRANCH | 
 class Failure(message: String) : Exception(message)
 
 fun run(directory: File?, vararg command: String) {
-    println("\nRun `${command.joinToString(" ", transform = ::quote)}`")
+    println("\nRun `${command.joinToString(" ", transform = ::quote)}`\n")
     val status = try {
         ProcessBuilder(*command).directory(directory).inheritIO().start().waitFor()
     } catch (e: IOException) {
