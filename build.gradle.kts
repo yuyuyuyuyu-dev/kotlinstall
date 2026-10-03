@@ -16,14 +16,6 @@ kotlin {
         entryPoint = "dev.yuyuyuyuyu.kotlinstall.main"
     }
 
-    compilerOptions {
-        optIn.addAll(
-            "kotlin.concurrent.atomics.ExperimentalAtomicApi",
-            "kotlin.experimental.ExperimentalNativeApi",
-            "kotlinx.cinterop.ExperimentalForeignApi",
-        )
-    }
-
     sourceSets {
         nativeMain.dependencies {
             implementation("com.github.ajalt.clikt:clikt-core:5.1.0")

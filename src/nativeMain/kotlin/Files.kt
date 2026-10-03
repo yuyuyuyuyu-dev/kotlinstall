@@ -1,5 +1,6 @@
 package dev.yuyuyuyuyu.kotlinstall
 
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.cstr
@@ -31,15 +32,18 @@ fun isDirectory(path: Path) = runCatching { files.metadata(files.canonicalize(pa
 
 fun isRegularFile(path: Path) = runCatching { files.metadata(files.canonicalize(path)).isRegularFile }.getOrDefault(false)
 
+@OptIn(ExperimentalForeignApi::class)
 fun createTemporaryDirectory(parent: Path, prefix: String): Path = memScoped {
     val template = (parent / "${prefix}XXXXXX").toString().cstr.getPointer(this)
     (mkdtemp(template) ?: fail("Could not create a directory in $parent: ${reason()}")).toKString().toPath()
 }
 
+@OptIn(ExperimentalForeignApi::class)
 fun setMode(path: Path, mode: String) {
     if (chmod(path.toString(), mode.toInt(8).convert()) != 0) fail("Could not change the permissions of $path: ${reason()}")
 }
 
+@OptIn(ExperimentalForeignApi::class)
 fun <T> withLock(file: Path, action: () -> T): T {
     val descriptor = open(file.toString(), O_CREAT or O_WRONLY, "644".toInt(8))
     if (descriptor < 0) fail("Could not open $file: ${reason()}")
@@ -58,4 +62,5 @@ fun <T> withLock(file: Path, action: () -> T): T {
     }
 }
 
+@OptIn(ExperimentalForeignApi::class)
 private fun reason() = strerror(errno)?.toKString()

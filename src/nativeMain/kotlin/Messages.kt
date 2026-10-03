@@ -1,6 +1,7 @@
 package dev.yuyuyuyuyu.kotlinstall
 
 import com.github.ajalt.clikt.core.CliktError
+import kotlinx.cinterop.ExperimentalForeignApi
 import platform.posix.fputs
 import platform.posix.stderr
 
@@ -14,6 +15,7 @@ fun announce(phase: String) {
 
 fun warn(message: String) = printError("\nWarning: $message")
 
+@OptIn(ExperimentalForeignApi::class)
 fun printError(message: String) {
     fputs("$message\n", stderr)
 }

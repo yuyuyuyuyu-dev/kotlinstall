@@ -7,6 +7,7 @@ import io.matthewnelson.kmp.process.changeDir
 import okio.Path
 import platform.posix.usleep
 import kotlin.concurrent.atomics.AtomicInt
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.atomics.incrementAndFetch
 
 fun execute(command: List<String>, directory: Path? = null) {
@@ -19,6 +20,7 @@ fun execute(command: List<String>, directory: Path? = null) {
     verify(command, status)
 }
 
+@OptIn(ExperimentalAtomicApi::class)
 fun capture(command: List<String>, directory: Path? = null): String {
     val output = StringBuilder()
     val closed = AtomicInt(0)
