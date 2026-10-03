@@ -8,6 +8,7 @@ val usage = "Usage: install-kotlinstall.main.kts [--git URL] [--branch BRANCH | 
 class Failure(message: String) : Exception(message)
 
 fun run(directory: File?, vararg command: String) {
+    println("\nRun `${command.joinToString(" ", transform = ::quote)}`")
     val status = try {
         ProcessBuilder(*command).directory(directory).inheritIO().start().waitFor()
     } catch (e: IOException) {
@@ -15,6 +16,9 @@ fun run(directory: File?, vararg command: String) {
     }
     if (status != 0) throw Failure("${command.joinToString(" ")} failed with exit code $status")
 }
+
+fun quote(argument: String) =
+    if (argument.isNotEmpty() && argument.all { it.isLetterOrDigit() || it in "%+,-./:=@_" }) argument else "'" + argument.replace("'", "'\\''") + "'"
 
 fun announce(phase: String) {
     val title = "==> $phase"
@@ -73,9 +77,7 @@ fun install(arguments: Iterator<String>) {
         }
         run(source, "sh", "gradlew", "--no-daemon", "linkReleaseExecutable${target.replaceFirstChar(Char::uppercaseChar)}")
         announce("Installing kotlinstall using the temporary kotlinstall")
-        val subcommand = listOf("install", repository) + reference + options
-        println("Run `kotlinstall ${subcommand.joinToString(" ")}`")
-        run(null, File(source, "build/bin/$target/releaseExecutable/kotlinstall.kexe").path, *subcommand.toTypedArray())
+        run(null, File(source, "build/bin/$target/releaseExecutable/kotlinstall.kexe").path, "install", repository, *reference.toTypedArray(), *options.toTypedArray())
     } finally {
         announce("Cleaning up the work directory")
         if (work.deleteRecursively()) println("Removed $work") else System.err.println("\nWarning: Could not remove $work")

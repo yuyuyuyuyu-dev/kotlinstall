@@ -37,8 +37,9 @@ fun capture(command: List<String>, directory: Path? = null): String {
     return output.toString()
 }
 
-private fun start(command: List<String>, directory: Path?, input: Stdio, output: Stdio): Process =
-    try {
+private fun start(command: List<String>, directory: Path?, input: Stdio, output: Stdio): Process {
+    inform("\nRun `${command.joinToString(" ", transform = ::quote)}`")
+    return try {
         Process.Builder(command.first())
             .args(command.drop(1))
             .changeDir(directory?.toString()?.toFile())
@@ -49,6 +50,10 @@ private fun start(command: List<String>, directory: Path?, input: Stdio, output:
     } catch (e: Exception) {
         fail("Could not run ${command.first()}: ${e.message}")
     }
+}
+
+private fun quote(argument: String) =
+    if (argument.isNotEmpty() && argument.all { it.isLetterOrDigit() || it in "%+,-./:=@_" }) argument else "'" + argument.replace("'", "'\\''") + "'"
 
 private fun verify(command: List<String>, status: Int) {
     if (status != 0) fail("${command.joinToString(" ")} failed with exit code $status")
