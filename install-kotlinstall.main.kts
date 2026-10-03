@@ -56,7 +56,7 @@ fun install(arguments: Iterator<String>) {
     val work = Files.createTempDirectory("kotlinstall-").toFile()
     try {
         val source = File(work, "kotlinstall")
-        announce("Getting the source code of kotlinstall")
+        announce("Preparing a temporary kotlinstall")
         when (reference.firstOrNull()) {
             null -> run(null, "git", "clone", "--depth", "1", repository, source.path)
             "--rev" -> {
@@ -65,11 +65,12 @@ fun install(arguments: Iterator<String>) {
             }
             else -> run(null, "git", "clone", "--depth", "1", "--branch", reference.last(), repository, source.path)
         }
-        announce("Building a temporary kotlinstall")
         run(source, "sh", "gradlew", "--no-daemon", "linkReleaseExecutable${target.replaceFirstChar(Char::uppercaseChar)}")
+        announce("Installing kotlinstall using the temporary kotlinstall")
         run(null, File(source, "build/bin/$target/releaseExecutable/kotlinstall.kexe").path, "install", repository, *reference.toTypedArray(), *options.toTypedArray())
     } finally {
-        work.deleteRecursively()
+        announce("Cleaning up the work directory")
+        if (work.deleteRecursively()) println("Removed $work") else System.err.println("\nWarning: Could not remove $work")
     }
 }
 
