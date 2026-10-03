@@ -78,8 +78,5 @@ class Installer(private val home: Home, private val force: Boolean) {
     private fun report(receipt: Receipt) {
         inform("Installed $receipt")
         receipt.commands.forEach { inform("    ${home.bin / it}") }
-        if (environment("PATH").orEmpty().split(':').none { it.isNotEmpty() && absolute(it.toPath()) == home.bin }) {
-            warn("${home.bin} is not in PATH. Add it to run the installed commands, for example: export PATH=\"${home.bin}:\$PATH\"")
-        }
     }
 }

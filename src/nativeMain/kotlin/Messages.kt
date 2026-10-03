@@ -13,8 +13,6 @@ fun announce(phase: String) {
     println("\n$rule\n$title\n$rule")
 }
 
-fun warn(message: String) = printError("\nWarning: $message")
-
 @OptIn(ExperimentalForeignApi::class)
 fun printError(message: String) {
     fputs("$message\n", stderr)

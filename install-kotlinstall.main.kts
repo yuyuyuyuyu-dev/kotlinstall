@@ -23,6 +23,12 @@ fun announce(phase: String) = println("\n${rule(phase, '=')}\n==> $phase\n${rule
 fun value(arguments: Iterator<String>, option: String) =
     if (arguments.hasNext()) arguments.next() else throw Failure("$option needs a value\n$usage")
 
+fun bin(): File {
+    val home = System.getenv("KOTLINSTALL_HOME")?.takeIf { it.isNotBlank() }
+        ?: "${System.getenv("HOME")?.takeIf { it.isNotBlank() } ?: System.getProperty("user.home")}/.kotlinstall"
+    return File(home, "bin").absoluteFile.normalize()
+}
+
 fun target(): String {
     val os = System.getProperty("os.name")
     val arch = System.getProperty("os.arch")
@@ -75,6 +81,10 @@ fun install(arguments: Iterator<String>) {
     } finally {
         announce("Cleaning up the work directory")
         if (work.deleteRecursively()) println("Removed $work") else System.err.println("\nWarning: Could not remove $work")
+    }
+    val bin = bin()
+    if (System.getenv("PATH").orEmpty().split(':').none { it.isNotEmpty() && File(it).absoluteFile.normalize() == bin }) {
+        System.err.println("\nWarning: $bin is not in PATH. Add it to run the installed commands, for example: export PATH=\"$bin:\$PATH\"")
     }
 }
 
