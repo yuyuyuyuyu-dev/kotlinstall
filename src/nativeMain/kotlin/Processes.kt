@@ -33,6 +33,7 @@ fun capture(command: List<String>, directory: Path? = null): String {
     } finally {
         process.destroy()
     }
+    print(output)
     verify(command, status)
     return output.toString()
 }
