@@ -16,11 +16,9 @@ fun run(directory: File?, vararg command: String) {
     if (status != 0) throw Failure("${command.joinToString(" ")} failed with exit code $status")
 }
 
-fun announce(phase: String) {
-    val title = "==> $phase"
-    val rule = "=".repeat(title.length + 1)
-    println("\n$rule\n$title\n$rule")
-}
+fun rule(phase: String, character: Char) = "$character".repeat("==> $phase".length + 1)
+
+fun announce(phase: String) = println("\n${rule(phase, '=')}\n==> $phase\n${rule(phase, '=')}")
 
 fun value(arguments: Iterator<String>, option: String) =
     if (arguments.hasNext()) arguments.next() else throw Failure("$option needs a value\n$usage")
@@ -66,8 +64,14 @@ fun install(arguments: Iterator<String>) {
             else -> run(null, "git", "clone", "--depth", "1", "--branch", reference.last(), repository, source.path)
         }
         run(source, "sh", "gradlew", "--no-daemon", "linkReleaseExecutable${target.replaceFirstChar(Char::uppercaseChar)}")
-        announce("Installing kotlinstall using the temporary kotlinstall")
-        run(null, File(source, "build/bin/$target/releaseExecutable/kotlinstall.kexe").path, "install", repository, *reference.toTypedArray(), *options.toTypedArray())
+        val installing = "Installing kotlinstall using the temporary kotlinstall"
+        announce(installing)
+        println(rule(installing, '-'))
+        try {
+            run(null, File(source, "build/bin/$target/releaseExecutable/kotlinstall.kexe").path, "install", repository, *reference.toTypedArray(), *options.toTypedArray())
+        } finally {
+            println(rule(installing, '-'))
+        }
     } finally {
         announce("Cleaning up the work directory")
         if (work.deleteRecursively()) println("Removed $work") else System.err.println("\nWarning: Could not remove $work")
