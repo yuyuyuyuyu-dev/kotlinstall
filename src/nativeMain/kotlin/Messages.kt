@@ -8,7 +8,7 @@ fun inform(message: Any) = println(message)
 
 fun announce(phase: String) {
     val title = "==> $phase"
-    val rule = "=".repeat(title.length)
+    val rule = "=".repeat(title.length + 1)
     println("\n$rule\n$title\n$rule")
 }
 
