@@ -38,7 +38,7 @@ fun capture(command: List<String>, directory: Path? = null): String {
 }
 
 private fun start(command: List<String>, directory: Path?, input: Stdio, output: Stdio): Process {
-    inform("\nRun `${command.joinToString(" ", transform = ::quote)}`\n")
+    inform("\nRUN: `${command.joinToString(" ", transform = ::quote)}`")
     return try {
         Process.Builder(command.first())
             .args(command.drop(1))
