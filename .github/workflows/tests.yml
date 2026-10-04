@@ -27,8 +27,6 @@ jobs:
             runner: ubuntu-latest
           - name: macOS Apple silicon
             runner: macos-latest
-          - name: macOS Intel
-            runner: macos-26-intel
     steps:
       - name: Checkout
         uses: actions/checkout@v7
