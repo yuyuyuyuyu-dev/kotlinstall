@@ -18,7 +18,7 @@ concurrency:
 jobs:
   install-kotlinstall:
     name: should install kotlinstall with the installer script
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -40,7 +40,7 @@ jobs:
 
   install-program:
     name: should install a program written in Kotlin
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -55,10 +55,10 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
 
       - name: Build kotlinstall
-        run: ./gradlew linkReleaseExecutableLinuxX64
+        run: ./gradlew linkReleaseExecutableMacosArm64
 
       - name: Install kotlinstall itself as the program written in Kotlin
-        run: build/bin/linuxX64/releaseExecutable/kotlinstall.kexe install "file://$GITHUB_WORKSPACE"
+        run: build/bin/macosArm64/releaseExecutable/kotlinstall.kexe install "file://$GITHUB_WORKSPACE"
 
       - name: Run the installed program
         run: ~/.kotlinstall/bin/kotlinstall list
