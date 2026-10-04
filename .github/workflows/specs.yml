@@ -39,7 +39,7 @@ jobs:
 
       # Assert
       - name: Run kotlinstall
-        run: ~/.kotlinstall/bin/kotlinstall list
+        run: ~/.kotlinstall/bin/kotlinstall --help
 
   install-program:
     name: should install a program written in Kotlin
@@ -67,4 +67,4 @@ jobs:
 
       # Assert
       - name: Run the installed program
-        run: ~/.kotlinstall/bin/kotlinstall list
+        run: ~/.kotlinstall/bin/kotlinstall --help
