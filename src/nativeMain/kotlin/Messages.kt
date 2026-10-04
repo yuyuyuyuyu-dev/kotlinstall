@@ -13,9 +13,12 @@ fun announce(phase: String) {
     println("\n$rule\n$title\n$rule")
 }
 
+fun printError(message: String) = echo(message, trailingNewline = true, error = true)
+
 @OptIn(ExperimentalForeignApi::class)
-fun printError(message: String) {
-    fputs("$message\n", stderr)
+fun echo(message: Any?, trailingNewline: Boolean, error: Boolean) {
+    val text = if (trailingNewline) "$message\n" else message.toString()
+    if (error) fputs(text, stderr) else print(text)
 }
 
 fun fail(message: String): Nothing = throw CliktError("Error: $message")
