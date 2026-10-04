@@ -26,7 +26,7 @@ class Sandbox {
         "KOTLINSTALL_HOME" to home.toString(),
         "TMPDIR" to temporary.toString(),
         // kotlinstall builds and installs programs written in Kotlin, so the tests have to build many times.
-        // That would be unbearable without the build cache.
+        // We could not put up with that without the build cache.
         "GRADLE_OPTS" to listOfNotNull(Process.Current.environment()["GRADLE_OPTS"], "-Dorg.gradle.caching=true").joinToString(" "),
     )
 
