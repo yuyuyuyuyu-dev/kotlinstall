@@ -20,6 +20,7 @@ jobs:
     name: should install kotlinstall with the installer script
     runs-on: macos-latest
     steps:
+      # Arrange
       - name: Checkout
         uses: actions/checkout@v7
 
@@ -32,9 +33,11 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
 
+      # Act
       - name: Run the installer script
         run: cat install-kotlinstall.main.kts | kotlinr -howtorun .main.kts /dev/stdin --git "file://$GITHUB_WORKSPACE"
 
+      # Assert
       - name: Run kotlinstall
         run: ~/.kotlinstall/bin/kotlinstall list
 
@@ -42,6 +45,7 @@ jobs:
     name: should install a program written in Kotlin
     runs-on: macos-latest
     steps:
+      # Arrange
       - name: Checkout
         uses: actions/checkout@v7
 
@@ -57,8 +61,10 @@ jobs:
       - name: Build kotlinstall
         run: ./gradlew linkReleaseExecutableMacosArm64
 
+      # Act
       - name: Install kotlinstall itself as the program written in Kotlin
         run: build/bin/macosArm64/releaseExecutable/kotlinstall.kexe install "file://$GITHUB_WORKSPACE"
 
+      # Assert
       - name: Run the installed program
         run: ~/.kotlinstall/bin/kotlinstall list
