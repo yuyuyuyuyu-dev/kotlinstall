@@ -1,0 +1,64 @@
+name: Specs
+
+on:
+  pull_request:
+
+  push:
+    branches: ["main"]
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "specs-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  install-kotlinstall:
+    name: should install kotlinstall with the installer script
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "21"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Run the installer script
+        run: kotlinr -howtorun .main.kts /dev/stdin --git "file://$GITHUB_WORKSPACE" < install-kotlinstall.main.kts
+
+      - name: Run kotlinstall
+        run: ~/.kotlinstall/bin/kotlinstall list
+
+  install-program:
+    name: should install a program written in Kotlin
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "21"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Build kotlinstall
+        run: ./gradlew linkReleaseExecutableLinuxX64
+
+      - name: Install kotlinstall itself as the program written in Kotlin
+        run: build/bin/linuxX64/releaseExecutable/kotlinstall.kexe install "file://$GITHUB_WORKSPACE"
+
+      - name: Run the installed program
+        run: ~/.kotlinstall/bin/kotlinstall list
