@@ -25,9 +25,8 @@ class Sandbox {
     private val defaults = mapOf(
         "KOTLINSTALL_HOME" to home.toString(),
         "TMPDIR" to temporary.toString(),
-        // kotlinstall exists to build programs, so its tests have to start many Gradle builds, and most of them
-        // build a program that an earlier test already built. Gradle's build cache lets Gradle reuse those results.
-        // Without it the tests are far too slow: on Linux in CI they took 51 minutes, and 18 with it.
+        // kotlinstall builds and installs programs written in Kotlin, so the tests have to build many times.
+        // We could not put up with that without the build cache.
         "GRADLE_OPTS" to listOfNotNull(Process.Current.environment()["GRADLE_OPTS"], "-Dorg.gradle.caching=true").joinToString(" "),
     )
 
