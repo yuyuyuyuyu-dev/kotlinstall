@@ -68,3 +68,38 @@ jobs:
       # Assert
       - name: Run the installed program
         run: ~/.kotlinstall/bin/kotlinstall --help
+
+  uninstall-program:
+    name: should uninstall a program written in Kotlin
+    runs-on: macos-latest
+    steps:
+      # Arrange
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "21"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Build kotlinstall
+        run: ./gradlew linkReleaseExecutableMacosArm64
+
+      - name: Install kotlinstall itself as the program written in Kotlin
+        run: build/bin/macosArm64/releaseExecutable/kotlinstall.kexe install "file://$GITHUB_WORKSPACE"
+
+      # Act
+      - name: Uninstall the program
+        run: build/bin/macosArm64/releaseExecutable/kotlinstall.kexe uninstall kotlinstall
+
+      # Assert
+      - name: Assert that the program is gone
+        run: |
+          if [ -e ~/.kotlinstall/bin/kotlinstall ] || [ -L ~/.kotlinstall/bin/kotlinstall ]; then
+            echo '::error::the program is still installed'
+            exit 1
+          fi
