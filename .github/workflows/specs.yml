@@ -103,3 +103,43 @@ jobs:
             echo '::error::the program is still installed'
             exit 1
           fi
+
+  help:
+    name: should print its help with --help
+    runs-on: macos-latest
+    steps:
+      # Arrange
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "21"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Build kotlinstall
+        run: ./gradlew linkReleaseExecutableMacosArm64
+
+      # Act
+      - name: Run kotlinstall with --help
+        run: build/bin/macosArm64/releaseExecutable/kotlinstall.kexe --help > "$RUNNER_TEMP/help.txt"
+
+      # Assert
+      - name: Assert that the help is the text written here
+        run: |
+          diff --unified - "$RUNNER_TEMP/help.txt" <<'EOF'
+          Usage: kotlinstall [<options>] <command> [<args>]...
+
+            Install Kotlin/Native programs from Git repositories
+
+          Options:
+            -h, --help  Show this message and exit
+
+          Commands:
+            install    Build a Kotlin/Native Gradle project from a Git repository and install its commands
+            uninstall  Remove installed packages and their commands
+          EOF
