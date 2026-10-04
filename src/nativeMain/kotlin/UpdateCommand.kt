@@ -9,6 +9,8 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 
 class UpdateCommand : CoreCliktCommand(name = "update") {
+    override val hiddenFromHelp = true
+
     override fun help(context: Context) = "Reinstall packages when their sources have new commits"
 
     private val names by argument("PACKAGE", help = "Name of a package to update. All packages are updated when none is given").multiple()

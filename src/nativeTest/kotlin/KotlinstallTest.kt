@@ -7,29 +7,38 @@ import kotlin.test.assertEquals
 
 class KotlinstallTest {
     private val sandbox = Sandbox()
-    private val commands = Regex("Commands:\n +install +\\S.*\n +update +\\S.*\n +uninstall +\\S.*\n +list +\\S.*")
+    private val help = """
+        Usage: kotlinstall [<options>] <command> [<args>]...
+
+          Install Kotlin/Native programs from Git repositories
+
+        Options:
+          -h, --help  Show this message and exit
+
+        Commands:
+          install    Build a Kotlin/Native Gradle project from a Git repository and install its commands
+          uninstall  Remove installed packages and their commands
+    """.trimIndent()
 
     @AfterTest
     fun cleanUp() = sandbox.delete()
 
     @Test
-    fun `should describe every command with --help`() {
+    fun `should print its help with --help`() {
         // Act
         val outcome = sandbox.kotlinstall("--help")
 
         // Assert
-        assertEquals(0, outcome.status, "$outcome")
-        assertContains(outcome.output, commands)
+        assertEquals(Outcome(0, help, ""), outcome)
     }
 
     @Test
-    fun `should describe every command when no command is given`() {
+    fun `should print its help when no command is given`() {
         // Act
         val outcome = sandbox.kotlinstall()
 
         // Assert
-        assertEquals(0, outcome.status, "$outcome")
-        assertContains(outcome.output, commands)
+        assertEquals(Outcome(0, help, ""), outcome)
     }
 
     @Test
