@@ -22,14 +22,18 @@ class Sandbox {
     val bin: Path = home / "bin"
     val temporary: Path = root / "temporary"
 
-    private val isolation = mapOf("KOTLINSTALL_HOME" to home.toString(), "TMPDIR" to temporary.toString())
+    private val defaults = mapOf(
+        "KOTLINSTALL_HOME" to home.toString(),
+        "TMPDIR" to temporary.toString(),
+        "GRADLE_OPTS" to listOfNotNull(Process.Current.environment()["GRADLE_OPTS"], "-Dorg.gradle.caching=true").joinToString(" "),
+    )
 
     init {
         FileSystem.SYSTEM.createDirectories(temporary)
     }
 
     fun kotlinstall(vararg arguments: String, directory: Path = root, environment: Map<String, String?> = emptyMap()): Outcome =
-        launch(listOf(setting("KOTLINSTALL_TEST_EXECUTABLE")) + arguments, directory, isolation + environment)
+        launch(listOf(setting("KOTLINSTALL_TEST_EXECUTABLE")) + arguments, directory, defaults + environment)
 
     fun install(vararg arguments: String) {
         val outcome = kotlinstall("install", *arguments)
@@ -40,11 +44,11 @@ class Sandbox {
         launch(
             listOf("kotlinr", "-howtorun", ".main.kts", "/dev/stdin") + arguments,
             root,
-            isolation + environment,
+            defaults + environment,
             FileSystem.SYSTEM.read(project / "install-kotlinstall.main.kts") { readUtf8() },
         )
 
-    fun command(name: String, vararg arguments: String): Outcome = launch(listOf((bin / name).toString()) + arguments, root, isolation)
+    fun command(name: String, vararg arguments: String): Outcome = launch(listOf((bin / name).toString()) + arguments, root, defaults)
 
     fun repository(name: String, parent: String = "repositories"): Repository = Repository(root / parent / name)
 
