@@ -33,7 +33,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
 
       - name: Run the installer script
-        run: kotlinr -howtorun .main.kts /dev/stdin --git "file://$GITHUB_WORKSPACE" < install-kotlinstall.main.kts
+        run: cat install-kotlinstall.main.kts | kotlinr -howtorun .main.kts /dev/stdin --git "file://$GITHUB_WORKSPACE"
 
       - name: Run kotlinstall
         run: ~/.kotlinstall/bin/kotlinstall list
