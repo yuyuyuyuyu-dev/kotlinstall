@@ -12,10 +12,16 @@ class Kotlinstall : CoreCliktCommand(name = "kotlinstall") {
     override fun run() = Unit
 }
 
-fun main(args: Array<String>) = Kotlinstall()
-    .subcommands(InstallCommand(), UpdateCommand(), UninstallCommand(), ListCommand())
-    .context {
-        exitProcess = { status -> kotlin.system.exitProcess(status) }
-        echoMessage = { _, message, trailingNewline, error -> echo(message, trailingNewline, error) }
-    }
-    .main(args)
+fun main(args: Array<String>) {
+    val commands = listOf(InstallCommand(), UpdateCommand(), UninstallCommand(), ListCommand())
+    val hidden = commands.filter { it.hiddenFromHelp }.map { it.commandName }.toSet()
+    Kotlinstall()
+        .subcommands(commands)
+        .context {
+            exitProcess = { status -> kotlin.system.exitProcess(status) }
+            echoMessage = { _, message, trailingNewline, error -> echo(message, trailingNewline, error) }
+            val suggest = suggestTypoCorrection
+            suggestTypoCorrection = { entered, candidates -> suggest(entered, candidates - hidden) }
+        }
+        .main(args)
+}

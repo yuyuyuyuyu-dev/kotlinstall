@@ -50,4 +50,16 @@ class KotlinstallTest {
         assertEquals(1, outcome.status, "$outcome")
         assertContains(outcome.error, "Error: no such subcommand upgrade")
     }
+
+    @Test
+    fun `should not suggest a command that its help leaves out`() {
+        // Act
+        val outcome = sandbox.kotlinstall("updat")
+
+        // Assert
+        assertEquals(
+            Outcome(1, "", "Usage: kotlinstall [<options>] <command> [<args>]...\n\nError: no such subcommand updat"),
+            outcome,
+        )
+    }
 }
