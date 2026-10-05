@@ -91,6 +91,25 @@ class UninstallTest {
     }
 
     @Test
+    fun `should uninstall itself and leave the other packages`() {
+        // Arrange
+        val source = sandbox.source()
+        sandbox.install(source.url)
+        val repository = sandbox.repository("hello")
+        val revision = repository.program("Hello!")
+        sandbox.install(repository.url)
+
+        // Act
+        val outcome = sandbox.command("kotlinstall", "uninstall", "kotlinstall")
+
+        // Assert
+        assertEquals(Outcome(0, "Removed ${sandbox.bin}/kotlinstall\nUninstalled kotlinstall", ""), outcome)
+        assertFalse(FileSystem.SYSTEM.exists(sandbox.bin / "kotlinstall"))
+        assertEquals(Outcome(0, "Hello!", ""), sandbox.command("hello"))
+        assertEquals(Outcome(0, "hello ${revision.take(7)} (${repository.url})\n    hello", ""), sandbox.kotlinstall("list"))
+    }
+
+    @Test
     fun `should print its help with --help`() {
         // Act
         val outcome = sandbox.kotlinstall("uninstall", "--help")
