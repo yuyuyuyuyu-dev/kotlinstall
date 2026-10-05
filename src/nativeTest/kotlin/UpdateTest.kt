@@ -55,7 +55,7 @@ class UpdateTest {
 
         // Assert
         assertEquals(0, outcome.status, "$outcome")
-        assertContains(outcome.output, "hello ${revision.take(7)} (${repository.url}) is up to date. Use --force to reinstall it.")
+        assertContains(outcome.output.lines(), "hello ${revision.take(7)} (${repository.url}) is up to date")
         assertFalse("Installed hello" in outcome.output, "$outcome")
     }
 
@@ -117,7 +117,7 @@ class UpdateTest {
 
         // Assert
         assertEquals(0, outcome.status, "$outcome")
-        assertContains(outcome.output, "hello ${revision.take(7)} (${repository.url} --rev $revision) is up to date.")
+        assertContains(outcome.output.lines(), "hello ${revision.take(7)} (${repository.url} --rev $revision) is up to date")
         assertEquals(Outcome(0, "first", ""), sandbox.command("hello"))
     }
 

@@ -152,7 +152,7 @@ class InstallTest {
 
         // Assert
         assertEquals(0, outcome.status, "$outcome")
-        assertContains(outcome.output, "hello ${revision.take(7)} (${repository.url}) is up to date. Use --force to reinstall it.")
+        assertContains(outcome.output.lines(), "hello ${revision.take(7)} (${repository.url}) is up to date")
         assertFalse("Installed hello" in outcome.output, "$outcome")
     }
 
@@ -220,7 +220,7 @@ class InstallTest {
 
         // Assert
         assertEquals(1, outcome.status, "$outcome")
-        assertContains(outcome.error, "Error: hello is already installed from ${first.url}. Use --force to replace it.")
+        assertContains(outcome.error.lines(), "Error: hello is already installed from ${first.url}")
         assertEquals(Outcome(0, "first", ""), sandbox.command("hello"))
     }
 
@@ -256,7 +256,7 @@ class InstallTest {
 
         // Assert
         assertEquals(1, outcome.status, "$outcome")
-        assertContains(outcome.error, "Error: ${sandbox.bin} already has shared (installed by first). Use --force to replace them.")
+        assertContains(outcome.error.lines(), "Error: ${sandbox.bin} already has shared (installed by first)")
         assertEquals(Outcome(0, "first", ""), sandbox.command("shared"))
         assertEquals(Outcome(0, "first ${revision.take(7)} (${first.url})\n    shared", ""), sandbox.kotlinstall("list"))
     }
@@ -324,7 +324,7 @@ class InstallTest {
 
         // Assert
         assertEquals(1, outcome.status, "$outcome")
-        assertContains(outcome.error, "Error: ${sandbox.bin} already has hello. Use --force to replace them.")
+        assertContains(outcome.error.lines(), "Error: ${sandbox.bin} already has hello")
         assertEquals("mine", FileSystem.SYSTEM.read(sandbox.bin / "hello") { readUtf8() })
         assertEquals(Outcome(0, "", ""), sandbox.kotlinstall("list"))
     }

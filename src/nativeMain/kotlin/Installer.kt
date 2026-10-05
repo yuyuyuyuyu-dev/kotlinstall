@@ -10,7 +10,7 @@ class Installer(private val home: Home, private val force: Boolean) {
         val host = Host.current() ?: fail("Kotlin/Native cannot build programs on this host")
         val installed = home.receipt(name)
         if (installed != null && !installed.isFrom(source) && !force) {
-            fail("$name is already installed from ${installed.source}. Use --force to replace it.")
+            fail("$name is already installed from ${installed.source}")
         }
         val work = createTemporaryDirectory(FileSystem.SYSTEM_TEMPORARY_DIRECTORY, "kotlinstall-")
         try {
@@ -18,7 +18,7 @@ class Installer(private val home: Home, private val force: Boolean) {
             announce("Getting the source code of $name")
             val revision = Git.clone(source, reference, checkout)
             if (installed != null && installed.isFrom(source) && installed.revision == revision && !force) {
-                inform("$installed is up to date. Use --force to reinstall it.")
+                inform("$installed is up to date")
                 return
             }
             if (!Gradle.isProject(checkout)) fail("$source is not a Gradle project")
@@ -56,7 +56,7 @@ class Installer(private val home: Home, private val force: Boolean) {
             home.owner(command)?.let { "$command (installed by $it)" } ?: command
         }
         if (conflicts.isNotEmpty()) {
-            if (!force) fail("${home.bin} already has $conflicts. Use --force to replace them.")
+            if (!force) fail("${home.bin} already has $conflicts")
             inform("Replacing $conflicts")
         }
         val staging = home.stage(receipt.name)
