@@ -211,6 +211,7 @@ jobs:
       - name: Check every change that using kotlinstall makes
         uses: yuyuyuyuyu-dev/assert-no-unexpected-changes@v1
         with:
+          workdir: /kotlinstall
           arrange: |
             apt-get update
             apt-get install --yes --no-install-recommends ca-certificates curl git openjdk-21-jdk-headless unzip
