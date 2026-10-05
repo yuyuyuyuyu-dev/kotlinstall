@@ -89,4 +89,30 @@ class UninstallTest {
         assertEquals(Outcome(0, "Uninstalled hello", ""), outcome)
         assertEquals("mine", FileSystem.SYSTEM.read(sandbox.bin / "hello") { readUtf8() })
     }
+
+    @Test
+    fun `should print its help with --help`() {
+        // Act
+        val outcome = sandbox.kotlinstall("uninstall", "--help")
+
+        // Assert
+        assertEquals(
+            Outcome(
+                0,
+                """
+                Usage: kotlinstall uninstall [<options>] <package>...
+
+                  Remove installed packages and their commands
+
+                Options:
+                  -h, --help  Show this message and exit
+
+                Arguments:
+                  <package>  Name of the package to remove
+                """.trimIndent(),
+                "",
+            ),
+            outcome,
+        )
+    }
 }
