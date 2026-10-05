@@ -199,3 +199,37 @@ jobs:
             Options:
               -h, --help  Show this message and exit
         run: printf '%s' "$HELP" | diff --unified - "$RUNNER_TEMP/help.txt"
+
+  unrelated-files:
+    name: should not touch unrelated files
+    runs-on: ubuntu-latest
+    steps:
+      # Arrange
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Check every change that using kotlinstall makes
+        uses: yuyuyuyuyu-dev/assert-no-unexpected-changes@v1
+        with:
+          arrange: |
+            apt-get update
+            apt-get install --yes --no-install-recommends ca-certificates curl git openjdk-21-jdk-headless unzip
+            version="$(sed -n 's/.*kotlin("multiplatform") version "\(.*\)".*/\1/p' build.gradle.kts)"
+            curl --fail --location --output /tmp/kotlin-compiler.zip "https://github.com/JetBrains/kotlin/releases/download/v$version/kotlin-compiler-$version.zip"
+            unzip /tmp/kotlin-compiler.zip -d /opt
+            rm /tmp/kotlin-compiler.zip
+            ./gradlew linkReleaseExecutableLinuxX64
+          # Act
+          act: |
+            export PATH="/opt/kotlinc/bin:$PATH"
+            build/bin/linuxX64/releaseExecutable/kotlinstall.kexe install "file://$PWD"
+            build/bin/linuxX64/releaseExecutable/kotlinstall.kexe uninstall kotlinstall
+            cat install-kotlinstall.main.kts | kotlinr -howtorun .main.kts /dev/stdin --git "file://$PWD"
+            ~/.kotlinstall/bin/kotlinstall --help
+          # Assert
+          allowlist: |
+            /root/.kotlinstall/*
+            /root/.gradle/*
+            /root/.konan/*
+            /tmp
+            /tmp/*
