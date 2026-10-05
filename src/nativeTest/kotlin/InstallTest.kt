@@ -587,6 +587,32 @@ class InstallTest {
         )
     }
 
+    @Test
+    fun `should print its help with --help`() {
+        // Act
+        val outcome = sandbox.kotlinstall("install", "--help")
+
+        // Assert
+        assertEquals(
+            Outcome(
+                0,
+                """
+                Usage: kotlinstall install [<options>] <url>
+
+                  Build a Kotlin/Native Gradle project from a Git repository and install its commands
+
+                Options:
+                  -h, --help  Show this message and exit
+
+                Arguments:
+                  <url>  URL or path of the Git repository
+                """.trimIndent(),
+                "",
+            ),
+            outcome,
+        )
+    }
+
     private fun programWithSubmodule(): Repository {
         val sources = sandbox.repository("sources")
         sources.write("nativeMain/kotlin/Main.kt", mainFunction("main", "Hello!"))

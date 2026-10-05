@@ -16,12 +16,12 @@ class InstallCommand : CoreCliktCommand(name = "install") {
     private val repository by argument("URL", help = "URL or path of the Git repository")
 
     private val reference by mutuallyExclusiveOptions(
-        option("--branch", metavar = "BRANCH", help = "Branch to install").convert { Reference(Reference.Kind.BRANCH, it) },
-        option("--tag", metavar = "TAG", help = "Tag to install").convert { Reference(Reference.Kind.TAG, it) },
-        option("--rev", metavar = "REV", help = "Commit to install").convert { Reference(Reference.Kind.REV, it) },
+        option("--branch", metavar = "BRANCH", help = "Branch to install", hidden = true).convert { Reference(Reference.Kind.BRANCH, it) },
+        option("--tag", metavar = "TAG", help = "Tag to install", hidden = true).convert { Reference(Reference.Kind.TAG, it) },
+        option("--rev", metavar = "REV", help = "Commit to install", hidden = true).convert { Reference(Reference.Kind.REV, it) },
     ).single()
 
-    private val force by option("--force", help = "Reinstall even if up to date, and take over commands of other packages").flag()
+    private val force by option("--force", help = "Reinstall even if up to date, and take over commands of other packages", hidden = true).flag()
 
     override fun run() = Installer(Home.current(), force).install(locate(repository), reference)
 
