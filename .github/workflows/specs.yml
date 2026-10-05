@@ -105,8 +105,46 @@ jobs:
           fi
 
   help:
-    name: should print its help with --help
+    name: should print the help with ${{ matrix.arguments }}
     runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arguments: --help
+            help: |
+              Usage: kotlinstall [<options>] <command> [<args>]...
+
+                Install Kotlin/Native programs from Git repositories
+
+              Options:
+                -h, --help  Show this message and exit
+
+              Commands:
+                install    Build a Kotlin/Native Gradle project from a Git repository and install its commands
+                uninstall  Remove installed packages and their commands
+          - arguments: install --help
+            help: |
+              Usage: kotlinstall install [<options>] <url>
+
+                Build a Kotlin/Native Gradle project from a Git repository and install its commands
+
+              Options:
+                -h, --help  Show this message and exit
+
+              Arguments:
+                <url>  URL or path of the Git repository
+          - arguments: uninstall --help
+            help: |
+              Usage: kotlinstall uninstall [<options>] <package>...
+
+                Remove installed packages and their commands
+
+              Options:
+                -h, --help  Show this message and exit
+
+              Arguments:
+                <package>  Name of the package to remove
     steps:
       # Arrange
       - name: Checkout
@@ -125,21 +163,11 @@ jobs:
         run: ./gradlew linkReleaseExecutableMacosArm64
 
       # Act
-      - name: Run kotlinstall with --help
-        run: build/bin/macosArm64/releaseExecutable/kotlinstall.kexe --help > "$RUNNER_TEMP/help.txt"
+      - name: Run kotlinstall with ${{ matrix.arguments }}
+        run: build/bin/macosArm64/releaseExecutable/kotlinstall.kexe ${{ matrix.arguments }} > "$RUNNER_TEMP/help.txt"
 
       # Assert
-      - name: Assert that the help is the text written here
-        run: |
-          diff --unified - "$RUNNER_TEMP/help.txt" <<'EOF'
-          Usage: kotlinstall [<options>] <command> [<args>]...
-
-            Install Kotlin/Native programs from Git repositories
-
-          Options:
-            -h, --help  Show this message and exit
-
-          Commands:
-            install    Build a Kotlin/Native Gradle project from a Git repository and install its commands
-            uninstall  Remove installed packages and their commands
-          EOF
+      - name: Assert that the help is the text written in this workflow
+        env:
+          HELP: ${{ matrix.help }}
+        run: printf '%s' "$HELP" | diff --unified - "$RUNNER_TEMP/help.txt"
