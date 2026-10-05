@@ -171,3 +171,28 @@ jobs:
         env:
           HELP: ${{ matrix.help }}
         run: printf '%s' "$HELP" | diff --unified - "$RUNNER_TEMP/help.txt"
+
+  installer-help:
+    name: should print the usage of the installer script with --help
+    runs-on: macos-latest
+    steps:
+      # Arrange
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "21"
+
+      # Act
+      - name: Run the installer script with --help
+        run: cat install-kotlinstall.main.kts | kotlinr -howtorun .main.kts /dev/stdin --help > "$RUNNER_TEMP/usage.txt"
+
+      # Assert
+      - name: Assert that the usage is the text written in this workflow
+        env:
+          USAGE: |
+            Usage: install-kotlinstall.main.kts
+        run: printf '%s' "$USAGE" | diff --unified - "$RUNNER_TEMP/usage.txt"
