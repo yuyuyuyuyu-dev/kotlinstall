@@ -3,7 +3,8 @@ import java.io.IOException
 import java.nio.file.Files
 import kotlin.system.exitProcess
 
-val usage = "Usage: install-kotlinstall.main.kts"
+val usage = "Usage: install-kotlinstall.main.kts [<options>]"
+val help = "$usage\n\nOptions:\n  -h, --help  Show this message and exit"
 
 class Failure(message: String) : Exception(message)
 
@@ -58,7 +59,7 @@ fun install(arguments: Iterator<String>) {
                 reference += listOf(argument, value(arguments, argument))
             }
             "--force" -> options += argument
-            "-h", "--help" -> return println(usage)
+            "-h", "--help" -> return println(help)
             else -> throw Failure("Unknown argument $argument\n$usage")
         }
     }

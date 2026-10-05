@@ -11,7 +11,13 @@ import kotlin.test.assertNotNull
 
 class InstallerTest {
     private val sandbox = Sandbox()
-    private val usage = "Usage: install-kotlinstall.main.kts"
+    private val usage = "Usage: install-kotlinstall.main.kts [<options>]"
+    private val help = """
+        Usage: install-kotlinstall.main.kts [<options>]
+
+        Options:
+          -h, --help  Show this message and exit
+    """.trimIndent()
 
     @AfterTest
     fun cleanUp() = sandbox.delete()
@@ -120,12 +126,21 @@ class InstallerTest {
     }
 
     @Test
-    fun `should print its usage with --help`() {
+    fun `should print its help with --help`() {
         // Act
         val outcome = sandbox.installer("--help")
 
         // Assert
-        assertEquals(Outcome(0, usage, ""), outcome)
+        assertEquals(Outcome(0, help, ""), outcome)
+    }
+
+    @Test
+    fun `should print its help with -h`() {
+        // Act
+        val outcome = sandbox.installer("-h")
+
+        // Assert
+        assertEquals(Outcome(0, help, ""), outcome)
     }
 
     @Test
