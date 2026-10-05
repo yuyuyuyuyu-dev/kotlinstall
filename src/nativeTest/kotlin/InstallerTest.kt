@@ -11,7 +11,7 @@ import kotlin.test.assertNotNull
 
 class InstallerTest {
     private val sandbox = Sandbox()
-    private val usage = "Usage: install-kotlinstall.main.kts [--git URL] [--branch BRANCH | --tag TAG | --rev REV] [--force]"
+    private val usage = "Usage: install-kotlinstall.main.kts"
 
     @AfterTest
     fun cleanUp() = sandbox.delete()
