@@ -4,8 +4,6 @@ import com.github.ajalt.clikt.core.CoreCliktCommand
 import com.github.ajalt.clikt.core.Context
 
 class ListCommand : CoreCliktCommand(name = "list") {
-    override val hiddenFromHelp = true
-
     override fun help(context: Context) = "List the installed packages and their commands"
 
     override fun run() {

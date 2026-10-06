@@ -18,6 +18,7 @@ class KotlinstallTest {
         Commands:
           install    Build a Kotlin/Native Gradle project from a Git repository and install its commands
           uninstall  Remove installed packages and their commands
+          list       List the installed packages and their commands
     """.trimIndent()
 
     @AfterTest

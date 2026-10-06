@@ -50,4 +50,27 @@ class ListTest {
             outcome,
         )
     }
+
+    @Test
+    fun `should print its help with --help`() {
+        // Act
+        val outcome = sandbox.kotlinstall("list", "--help")
+
+        // Assert
+        assertEquals(
+            Outcome(
+                0,
+                """
+                Usage: kotlinstall list [<options>]
+
+                  List the installed packages and their commands
+
+                Options:
+                  -h, --help  Show this message and exit
+                """.trimIndent(),
+                "",
+            ),
+            outcome,
+        )
+    }
 }
