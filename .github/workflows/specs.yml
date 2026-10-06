@@ -104,6 +104,39 @@ jobs:
             exit 1
           fi
 
+  list-packages:
+    name: should list the installed packages
+    runs-on: macos-latest
+    steps:
+      # Arrange
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "21"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Build kotlinstall
+        run: ./gradlew linkReleaseExecutableMacosArm64
+
+      - name: Install kotlinstall itself as the program written in Kotlin
+        run: build/bin/macosArm64/releaseExecutable/kotlinstall.kexe install "file://$GITHUB_WORKSPACE"
+
+      # Act
+      - name: List the installed packages
+        run: build/bin/macosArm64/releaseExecutable/kotlinstall.kexe list > "$RUNNER_TEMP/list.txt"
+
+      # Assert
+      - name: Assert that the list shows the package and its command
+        run: |
+          revision="$(git rev-parse HEAD | cut -c 1-7)"
+          printf '%s\n' "kotlinstall $revision (file://$GITHUB_WORKSPACE)" "    kotlinstall" | diff --unified - "$RUNNER_TEMP/list.txt"
+
   help:
     name: should print the help with ${{ matrix.arguments }}
     runs-on: macos-latest
@@ -123,6 +156,7 @@ jobs:
               Commands:
                 install    Build a Kotlin/Native Gradle project from a Git repository and install its commands
                 uninstall  Remove installed packages and their commands
+                list       List the installed packages and their commands
           - arguments: install --help
             help: |
               Usage: kotlinstall install [<options>] <url>
@@ -145,6 +179,14 @@ jobs:
 
               Arguments:
                 <package>  Name of the package to remove
+          - arguments: list --help
+            help: |
+              Usage: kotlinstall list [<options>]
+
+                List the installed packages and their commands
+
+              Options:
+                -h, --help  Show this message and exit
     steps:
       # Arrange
       - name: Checkout
