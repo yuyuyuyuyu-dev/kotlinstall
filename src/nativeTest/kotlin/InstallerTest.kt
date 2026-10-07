@@ -33,7 +33,7 @@ class InstallerTest {
         // Assert
         assertEquals(0, outcome.status, "$outcome")
         assertEquals(
-            Outcome(0, "kotlinstall ${source.head.take(7)} (${source.url})\n    kotlinstall", ""),
+            Outcome(0, listed("kotlinstall", source.head, source.url, "kotlinstall"), ""),
             sandbox.command("kotlinstall", "list"),
         )
     }
@@ -53,7 +53,7 @@ class InstallerTest {
         // Assert
         assertEquals(0, outcome.status, "$outcome")
         assertEquals(
-            Outcome(0, "kotlinstall ${revision.take(7)} (${source.url} --branch next)\n    kotlinstall", ""),
+            Outcome(0, listed("kotlinstall", revision, "${source.url} --branch next", "kotlinstall"), ""),
             sandbox.command("kotlinstall", "list"),
         )
     }
@@ -72,7 +72,7 @@ class InstallerTest {
         // Assert
         assertEquals(0, outcome.status, "$outcome")
         assertEquals(
-            Outcome(0, "kotlinstall ${revision.take(7)} (${source.url} --rev $revision)\n    kotlinstall", ""),
+            Outcome(0, listed("kotlinstall", revision, "${source.url} --rev $revision", "kotlinstall"), ""),
             sandbox.command("kotlinstall", "list"),
         )
     }
@@ -90,7 +90,7 @@ class InstallerTest {
         // Assert
         assertEquals(0, outcome.status, "$outcome")
         assertEquals(
-            Outcome(0, "kotlinstall ${source.head.take(7)} (${source.url})\n    kotlinstall", ""),
+            Outcome(0, listed("kotlinstall", source.head, source.url, "kotlinstall"), ""),
             sandbox.command("kotlinstall", "list"),
         )
     }

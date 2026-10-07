@@ -59,7 +59,7 @@ class InstallTest {
 
         // Assert
         assertEquals(0, outcome.status, "$outcome")
-        assertEquals(Outcome(0, "hello ${revision.take(7)} (${repository.path})\n    hello", ""), sandbox.kotlinstall("list"))
+        assertEquals(Outcome(0, listed("hello", revision, repository.path, "hello"), ""), sandbox.kotlinstall("list"))
     }
 
     @Test
@@ -73,7 +73,7 @@ class InstallTest {
 
         // Assert
         assertEquals(0, outcome.status, "$outcome")
-        assertEquals(Outcome(0, "hello ${revision.take(7)} (${repository.url})\n    hello", ""), sandbox.kotlinstall("list"))
+        assertEquals(Outcome(0, listed("hello", revision, repository.url, "hello"), ""), sandbox.kotlinstall("list"))
     }
 
     @Test
@@ -87,7 +87,7 @@ class InstallTest {
 
         // Assert
         assertEquals(0, outcome.status, "$outcome")
-        assertEquals(Outcome(0, "hello ${revision.take(7)} (${repository.url})\n    hello", ""), sandbox.kotlinstall("list"))
+        assertEquals(Outcome(0, listed("hello", revision, repository.url, "hello"), ""), sandbox.kotlinstall("list"))
     }
 
     @Test
@@ -106,7 +106,7 @@ class InstallTest {
         assertEquals(0, outcome.status, "$outcome")
         assertEquals(Outcome(0, "next", ""), sandbox.command("hello"))
         assertEquals(
-            Outcome(0, "hello ${revision.take(7)} (${repository.url} --branch next)\n    hello", ""),
+            Outcome(0, listed("hello", revision, "${repository.url} --branch next", "hello"), ""),
             sandbox.kotlinstall("list"),
         )
     }
@@ -125,7 +125,7 @@ class InstallTest {
         assertEquals(0, outcome.status, "$outcome")
         assertEquals(Outcome(0, "first", ""), sandbox.command("hello"))
         assertEquals(
-            Outcome(0, "hello ${revision.take(7)} (${repository.url} --rev $revision)\n    hello", ""),
+            Outcome(0, listed("hello", revision, "${repository.url} --rev $revision", "hello"), ""),
             sandbox.kotlinstall("list"),
         )
     }
@@ -186,7 +186,7 @@ class InstallTest {
         // Assert
         assertEquals(0, outcome.status, "$outcome")
         assertEquals(Outcome(0, "second", ""), sandbox.command("hello"))
-        assertEquals(Outcome(0, "hello ${revision.take(7)} (${repository.url})\n    hello", ""), sandbox.kotlinstall("list"))
+        assertEquals(Outcome(0, listed("hello", revision, repository.url, "hello"), ""), sandbox.kotlinstall("list"))
     }
 
     @Test
@@ -203,7 +203,7 @@ class InstallTest {
         // Assert
         assertEquals(0, outcome.status, "$outcome")
         assertFalse(FileSystem.SYSTEM.exists(sandbox.bin / "second"))
-        assertEquals(Outcome(0, "tools ${revision.take(7)} (${repository.url})\n    first", ""), sandbox.kotlinstall("list"))
+        assertEquals(Outcome(0, listed("tools", revision, repository.url, "first"), ""), sandbox.kotlinstall("list"))
     }
 
     @Test
@@ -239,7 +239,7 @@ class InstallTest {
         // Assert
         assertEquals(0, outcome.status, "$outcome")
         assertEquals(Outcome(0, "second", ""), sandbox.command("hello"))
-        assertEquals(Outcome(0, "hello ${revision.take(7)} (${second.url})\n    hello", ""), sandbox.kotlinstall("list"))
+        assertEquals(Outcome(0, listed("hello", revision, second.url, "hello"), ""), sandbox.kotlinstall("list"))
     }
 
     @Test
@@ -258,7 +258,7 @@ class InstallTest {
         assertEquals(1, outcome.status, "$outcome")
         assertContains(outcome.error.lines(), "Error: ${sandbox.bin} already has shared (installed by first)")
         assertEquals(Outcome(0, "first", ""), sandbox.command("shared"))
-        assertEquals(Outcome(0, "first ${revision.take(7)} (${first.url})\n    shared", ""), sandbox.kotlinstall("list"))
+        assertEquals(Outcome(0, listed("first", revision, first.url, "shared"), ""), sandbox.kotlinstall("list"))
     }
 
     @Test
@@ -277,7 +277,7 @@ class InstallTest {
         assertEquals(0, outcome.status, "$outcome")
         assertContains(outcome.output, "Replacing shared (installed by first)")
         assertEquals(Outcome(0, "second", ""), sandbox.command("shared"))
-        assertEquals(Outcome(0, "second ${revision.take(7)} (${second.url})\n    shared", ""), sandbox.kotlinstall("list"))
+        assertEquals(Outcome(0, listed("second", revision, second.url, "shared"), ""), sandbox.kotlinstall("list"))
     }
 
     @Test
@@ -299,12 +299,10 @@ class InstallTest {
         assertEquals(
             Outcome(
                 0,
-                """
-                first ${firstRevision.take(7)} (${first.url})
-                    own
-                second ${secondRevision.take(7)} (${second.url})
-                    shared
-                """.trimIndent(),
+                listOf(
+                    listed("first", firstRevision, first.url, "own"),
+                    listed("second", secondRevision, second.url, "shared"),
+                ).joinToString("\n\n"),
                 "",
             ),
             sandbox.kotlinstall("list"),
@@ -418,7 +416,7 @@ class InstallTest {
         assertEquals(Outcome(0, "1", ""), sandbox.command("first"))
         assertEquals(Outcome(0, "2", ""), sandbox.command("second"))
         assertEquals(
-            Outcome(0, "tools ${revision.take(7)} (${repository.url})\n    first\n    second", ""),
+            Outcome(0, listed("tools", revision, repository.url, "first", "second"), ""),
             sandbox.kotlinstall("list"),
         )
     }
@@ -582,7 +580,7 @@ class InstallTest {
         // Assert
         assertEquals(0, outcome.status, "$outcome")
         assertEquals(
-            Outcome(0, "kotlinstall ${source.head.take(7)} (${source.url})\n    kotlinstall", ""),
+            Outcome(0, listed("kotlinstall", source.head, source.url, "kotlinstall"), ""),
             sandbox.command("kotlinstall", "list"),
         )
     }

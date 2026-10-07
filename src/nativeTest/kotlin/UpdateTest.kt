@@ -99,7 +99,7 @@ class UpdateTest {
         assertEquals(0, outcome.status, "$outcome")
         assertEquals(Outcome(0, "next 2", ""), sandbox.command("hello"))
         assertEquals(
-            Outcome(0, "hello ${revision.take(7)} (${repository.url} --branch next)\n    hello", ""),
+            Outcome(0, listed("hello", revision, "${repository.url} --branch next", "hello"), ""),
             sandbox.kotlinstall("list"),
         )
     }
@@ -183,7 +183,7 @@ class UpdateTest {
         // Assert
         assertEquals(0, outcome.status, "$outcome")
         assertEquals(
-            Outcome(0, "kotlinstall ${revision.take(7)} (${source.url})\n    kotlinstall", ""),
+            Outcome(0, listed("kotlinstall", revision, source.url, "kotlinstall"), ""),
             sandbox.command("kotlinstall", "list"),
         )
     }

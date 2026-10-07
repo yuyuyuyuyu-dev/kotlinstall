@@ -20,7 +20,7 @@ class ListTest {
     }
 
     @Test
-    fun `should list each package with its revision and source and commands`() {
+    fun `should list each package with its commands and source and revision`() {
         // Arrange
         val first = sandbox.repository("first")
         val firstRevision = first.programs(mapOf("one" to "1", "two" to "2"))
@@ -39,11 +39,15 @@ class ListTest {
             Outcome(
                 0,
                 """
-                first ${firstRevision.take(7)} (${first.url})
-                    one
-                    two
-                second ${secondRevision.take(7)} (${second.url} --branch next)
-                    second
+                package:  first
+                commands: one, two
+                source:   ${first.url}
+                revision: ${firstRevision.take(7)}
+
+                package:  second
+                commands: second
+                source:   ${second.url} --branch next
+                revision: ${secondRevision.take(7)}
                 """.trimIndent(),
                 "",
             ),

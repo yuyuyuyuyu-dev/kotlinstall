@@ -106,7 +106,7 @@ class UninstallTest {
         assertEquals(Outcome(0, "Removed ${sandbox.bin}/kotlinstall\nUninstalled kotlinstall", ""), outcome)
         assertFalse(FileSystem.SYSTEM.exists(sandbox.bin / "kotlinstall"))
         assertEquals(Outcome(0, "Hello!", ""), sandbox.command("hello"))
-        assertEquals(Outcome(0, "hello ${revision.take(7)} (${repository.url})\n    hello", ""), sandbox.kotlinstall("list"))
+        assertEquals(Outcome(0, listed("hello", revision, repository.url, "hello"), ""), sandbox.kotlinstall("list"))
     }
 
     @Test

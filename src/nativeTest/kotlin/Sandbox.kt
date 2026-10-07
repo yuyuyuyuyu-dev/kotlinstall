@@ -12,6 +12,9 @@ import kotlin.test.fail
 
 data class Outcome(val status: Int, val output: String, val error: String)
 
+fun listed(name: String, revision: String, source: String, vararg commands: String) =
+    "package:  $name\ncommands: ${commands.joinToString(", ")}\nsource:   $source\nrevision: ${revision.take(7)}"
+
 class Sandbox {
     val root: Path = FileSystem.SYSTEM.run {
         val directory = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / "kotlinstall-test-${Random.nextLong().toULong().toString(36)}"

@@ -84,9 +84,14 @@ jobs:
 
       - name: Assert that the tagged commit was installed
         run: |
-          expected="kotlinstall $(git -C "$RUNNER_TEMP/kotlinstall" rev-parse v1 | cut -c 1-7) (file://$RUNNER_TEMP/kotlinstall --tag v1)"
-          actual="$(~/.kotlinstall/bin/kotlinstall list | sed -n 1p)"
-          test "$actual" = "$expected" || { echo "::error::expected '$expected' but got '$actual'"; exit 1; }
+          revision="$(git -C "$RUNNER_TEMP/kotlinstall" rev-parse v1 | cut -c 1-7)"
+          ~/.kotlinstall/bin/kotlinstall list > "$RUNNER_TEMP/list.txt"
+          diff --unified - "$RUNNER_TEMP/list.txt" <<EOF
+          package:  kotlinstall
+          commands: kotlinstall
+          source:   file://$RUNNER_TEMP/kotlinstall --tag v1
+          revision: $revision
+          EOF
 
   update-tag:
     name: should keep a package at the tag that it was installed from
@@ -137,9 +142,14 @@ jobs:
 
       - name: Assert that the package stayed at the tagged commit
         run: |
-          expected="kotlinstall $(git -C "$RUNNER_TEMP/kotlinstall" rev-parse v1 | cut -c 1-7) (file://$RUNNER_TEMP/kotlinstall --tag v1)"
-          actual="$(~/.kotlinstall/bin/kotlinstall list | sed -n 1p)"
-          test "$actual" = "$expected" || { echo "::error::expected '$expected' but got '$actual'"; exit 1; }
+          revision="$(git -C "$RUNNER_TEMP/kotlinstall" rev-parse v1 | cut -c 1-7)"
+          ~/.kotlinstall/bin/kotlinstall list > "$RUNNER_TEMP/list.txt"
+          diff --unified - "$RUNNER_TEMP/list.txt" <<EOF
+          package:  kotlinstall
+          commands: kotlinstall
+          source:   file://$RUNNER_TEMP/kotlinstall --tag v1
+          revision: $revision
+          EOF
 
   installer-tag:
     name: should install the given tag with the installer script
@@ -177,9 +187,14 @@ jobs:
 
       - name: Assert that the tagged commit was installed
         run: |
-          expected="kotlinstall $(git -C "$RUNNER_TEMP/kotlinstall" rev-parse v1 | cut -c 1-7) (file://$RUNNER_TEMP/kotlinstall --tag v1)"
-          actual="$(~/.kotlinstall/bin/kotlinstall list | sed -n 1p)"
-          test "$actual" = "$expected" || { echo "::error::expected '$expected' but got '$actual'"; exit 1; }
+          revision="$(git -C "$RUNNER_TEMP/kotlinstall" rev-parse v1 | cut -c 1-7)"
+          ~/.kotlinstall/bin/kotlinstall list > "$RUNNER_TEMP/list.txt"
+          diff --unified - "$RUNNER_TEMP/list.txt" <<EOF
+          package:  kotlinstall
+          commands: kotlinstall
+          source:   file://$RUNNER_TEMP/kotlinstall --tag v1
+          revision: $revision
+          EOF
 
   unsupported-host:
     name: should refuse a host that Kotlin/Native cannot build on
