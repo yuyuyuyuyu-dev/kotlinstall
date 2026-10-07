@@ -135,7 +135,10 @@ jobs:
       - name: Assert that the list shows the package and its command
         run: |
           revision="$(git rev-parse HEAD | cut -c 1-7)"
-          printf '%s\n' "kotlinstall $revision (file://$GITHUB_WORKSPACE)" "    kotlinstall" | diff --unified - "$RUNNER_TEMP/list.txt"
+          diff --unified - "$RUNNER_TEMP/list.txt" <<EOF
+          kotlinstall $revision (file://$GITHUB_WORKSPACE)
+              kotlinstall
+          EOF
 
   help:
     name: should print the help with ${{ matrix.arguments }}
