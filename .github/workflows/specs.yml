@@ -215,7 +215,7 @@ jobs:
         include:
           - when: the installer script installs kotlinstall
             arrange: |
-              version="$(sed -n 's/.*kotlin("multiplatform") version "\(.*\)".*/\1/p' build.gradle.kts)"
+              version="$(sed -n 's/^kotlin = "\(.*\)"$/\1/p' gradle/libs.versions.toml)"
               curl --fail --location --output /tmp/kotlin-compiler.zip "https://github.com/JetBrains/kotlin/releases/download/v$version/kotlin-compiler-$version.zip"
               unzip /tmp/kotlin-compiler.zip -d /opt
               rm /tmp/kotlin-compiler.zip

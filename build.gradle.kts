@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
 
 plugins {
-    kotlin("multiplatform") version "2.4.20"
+    alias(libs.plugins.kotlin.multiplatform)
 }
 
 kotlin {
@@ -23,12 +23,12 @@ kotlin {
 
     sourceSets {
         nativeMain.dependencies {
-            implementation("com.github.ajalt.clikt:clikt-core:5.1.0")
-            implementation("com.squareup.okio:okio:3.18.2")
-            implementation("io.matthewnelson.kmp-process:process:0.5.0")
+            implementation(libs.clikt.core)
+            implementation(libs.okio)
+            implementation(libs.kmp.process)
         }
         nativeTest.dependencies {
-            implementation(kotlin("test"))
+            implementation(libs.kotlin.test)
         }
     }
 
