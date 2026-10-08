@@ -21,16 +21,19 @@ jobs:
     runs-on: macos-latest
     steps:
       # Arrange
-      - name: Checkout
+      - &checkout
+        name: Checkout
         uses: actions/checkout@v7
 
-      - name: Setup Java
+      - &setup-java
+        name: Setup Java
         uses: actions/setup-java@v6
         with:
           distribution: zulu
           java-version: "21"
 
-      - name: Setup Gradle
+      - &setup-gradle
+        name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
 
       # Act
@@ -46,23 +49,17 @@ jobs:
     runs-on: macos-latest
     steps:
       # Arrange
-      - name: Checkout
-        uses: actions/checkout@v7
+      - *checkout
+      - *setup-java
+      - *setup-gradle
 
-      - name: Setup Java
-        uses: actions/setup-java@v6
-        with:
-          distribution: zulu
-          java-version: "21"
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
-
-      - name: Build kotlinstall
+      - &build-kotlinstall
+        name: Build kotlinstall
         run: ./gradlew linkReleaseExecutableMacosArm64
 
       # Act
-      - name: Install kotlinstall itself as the program written in Kotlin
+      - &install-program
+        name: Install kotlinstall itself as the program written in Kotlin
         run: build/bin/macosArm64/releaseExecutable/kotlinstall.kexe install "file://$GITHUB_WORKSPACE"
 
       # Assert
@@ -71,26 +68,15 @@ jobs:
 
   uninstall-program:
     name: should uninstall a program written in Kotlin
+    needs: install-program
     runs-on: macos-latest
     steps:
       # Arrange
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Setup Java
-        uses: actions/setup-java@v6
-        with:
-          distribution: zulu
-          java-version: "21"
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
-
-      - name: Build kotlinstall
-        run: ./gradlew linkReleaseExecutableMacosArm64
-
-      - name: Install kotlinstall itself as the program written in Kotlin
-        run: build/bin/macosArm64/releaseExecutable/kotlinstall.kexe install "file://$GITHUB_WORKSPACE"
+      - *checkout
+      - *setup-java
+      - *setup-gradle
+      - *build-kotlinstall
+      - *install-program
 
       # Act
       - name: Uninstall the program
@@ -106,26 +92,15 @@ jobs:
 
   list-packages:
     name: should list the installed packages
+    needs: install-program
     runs-on: macos-latest
     steps:
       # Arrange
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Setup Java
-        uses: actions/setup-java@v6
-        with:
-          distribution: zulu
-          java-version: "21"
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
-
-      - name: Build kotlinstall
-        run: ./gradlew linkReleaseExecutableMacosArm64
-
-      - name: Install kotlinstall itself as the program written in Kotlin
-        run: build/bin/macosArm64/releaseExecutable/kotlinstall.kexe install "file://$GITHUB_WORKSPACE"
+      - *checkout
+      - *setup-java
+      - *setup-gradle
+      - *build-kotlinstall
+      - *install-program
 
       # Act
       - name: List the installed packages
@@ -194,20 +169,10 @@ jobs:
                 -h, --help  Show this message and exit
     steps:
       # Arrange
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Setup Java
-        uses: actions/setup-java@v6
-        with:
-          distribution: zulu
-          java-version: "21"
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
-
-      - name: Build kotlinstall
-        run: ./gradlew linkReleaseExecutableMacosArm64
+      - *checkout
+      - *setup-java
+      - *setup-gradle
+      - *build-kotlinstall
 
       # Act
       - name: Run kotlinstall with ${{ matrix.arguments }}
@@ -224,14 +189,8 @@ jobs:
     runs-on: macos-latest
     steps:
       # Arrange
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Setup Java
-        uses: actions/setup-java@v6
-        with:
-          distribution: zulu
-          java-version: "21"
+      - *checkout
+      - *setup-java
 
       # Act
       - name: Run the installer script with --help
@@ -286,8 +245,7 @@ jobs:
               /root/.kotlinstall/*
     steps:
       # Arrange
-      - name: Checkout
-        uses: actions/checkout@v7
+      - *checkout
 
       - name: Check every change that is made when ${{ matrix.when }}
         uses: yuyuyuyuyu-dev/assert-no-unexpected-changes@v1
