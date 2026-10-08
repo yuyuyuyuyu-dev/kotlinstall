@@ -1,0 +1,261 @@
+name: Specs
+
+on:
+  pull_request:
+
+  push:
+    branches: ["main"]
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "specs-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  install-kotlinstall:
+    name: should install kotlinstall with the installer script
+    runs-on: macos-latest
+    steps:
+      # Arrange
+      - &checkout
+        name: Checkout
+        uses: actions/checkout@v7
+
+      - &setup-java
+        name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "21"
+
+      - &setup-gradle
+        name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      # Act
+      - name: Run the installer script
+        run: cat install-kotlinstall.main.kts | kotlinr -howtorun .main.kts /dev/stdin --git "file://$GITHUB_WORKSPACE"
+
+      # Assert
+      - name: Run kotlinstall
+        run: ~/.kotlinstall/bin/kotlinstall --help
+
+  install-program:
+    name: should install a program written in Kotlin
+    runs-on: macos-latest
+    steps:
+      # Arrange
+      - *checkout
+      - *setup-java
+      - *setup-gradle
+
+      - &build-kotlinstall
+        name: Build kotlinstall
+        run: ./gradlew linkReleaseExecutableMacosArm64
+
+      # Act
+      - &install-program
+        name: Install kotlinstall itself as the program written in Kotlin
+        run: build/bin/macosArm64/releaseExecutable/kotlinstall.kexe install "file://$GITHUB_WORKSPACE"
+
+      # Assert
+      - name: Run the installed program
+        run: ~/.kotlinstall/bin/kotlinstall --help
+
+  uninstall-program:
+    name: should uninstall a program written in Kotlin
+    needs: install-program
+    runs-on: macos-latest
+    steps:
+      # Arrange
+      - *checkout
+      - *setup-java
+      - *setup-gradle
+      - *build-kotlinstall
+      - *install-program
+
+      # Act
+      - name: Uninstall the program
+        run: build/bin/macosArm64/releaseExecutable/kotlinstall.kexe uninstall kotlinstall
+
+      # Assert
+      - name: Assert that the program is gone
+        run: |
+          if [ -e ~/.kotlinstall/bin/kotlinstall ] || [ -L ~/.kotlinstall/bin/kotlinstall ]; then
+            echo '::error::the program is still installed'
+            exit 1
+          fi
+
+  list-packages:
+    name: should list the installed packages
+    needs: install-program
+    runs-on: macos-latest
+    steps:
+      # Arrange
+      - *checkout
+      - *setup-java
+      - *setup-gradle
+      - *build-kotlinstall
+      - *install-program
+
+      # Act
+      - name: List the installed packages
+        run: build/bin/macosArm64/releaseExecutable/kotlinstall.kexe list > "$RUNNER_TEMP/list.txt"
+
+      # Assert
+      - name: Assert that the list is the text written here
+        run: |
+          revision="$(git rev-parse HEAD | cut -c 1-7)"
+          diff --unified - "$RUNNER_TEMP/list.txt" <<EOF
+          package:  kotlinstall
+          commands: kotlinstall
+          source:   file://$GITHUB_WORKSPACE
+          revision: $revision
+          EOF
+
+  help:
+    name: should print the help with ${{ matrix.arguments }}
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arguments: --help
+            help: |
+              Usage: kotlinstall [<options>] <command> [<args>]...
+
+                Install Kotlin/Native programs from Git repositories
+
+              Options:
+                -h, --help  Show this message and exit
+
+              Commands:
+                install    Build a Kotlin/Native Gradle project from a Git repository and install its commands
+                uninstall  Remove installed packages and their commands
+                list       List the installed packages and their commands
+          - arguments: install --help
+            help: |
+              Usage: kotlinstall install [<options>] <url>
+
+                Build a Kotlin/Native Gradle project from a Git repository and install its commands
+
+              Options:
+                -h, --help  Show this message and exit
+
+              Arguments:
+                <url>  URL or path of the Git repository
+          - arguments: uninstall --help
+            help: |
+              Usage: kotlinstall uninstall [<options>] <package>...
+
+                Remove installed packages and their commands
+
+              Options:
+                -h, --help  Show this message and exit
+
+              Arguments:
+                <package>  Name of the package to remove
+          - arguments: list --help
+            help: |
+              Usage: kotlinstall list [<options>]
+
+                List the installed packages and their commands
+
+              Options:
+                -h, --help  Show this message and exit
+    steps:
+      # Arrange
+      - *checkout
+      - *setup-java
+      - *setup-gradle
+      - *build-kotlinstall
+
+      # Act
+      - name: Run kotlinstall with ${{ matrix.arguments }}
+        run: build/bin/macosArm64/releaseExecutable/kotlinstall.kexe ${{ matrix.arguments }} > "$RUNNER_TEMP/help.txt"
+
+      # Assert
+      - name: Assert that the help is the text written in this workflow
+        env:
+          HELP: ${{ matrix.help }}
+        run: printf '%s' "$HELP" | diff --unified - "$RUNNER_TEMP/help.txt"
+
+  installer-help:
+    name: should print the help of the installer script with --help
+    runs-on: macos-latest
+    steps:
+      # Arrange
+      - *checkout
+      - *setup-java
+
+      # Act
+      - name: Run the installer script with --help
+        run: cat install-kotlinstall.main.kts | kotlinr -howtorun .main.kts /dev/stdin --help > "$RUNNER_TEMP/help.txt"
+
+      # Assert
+      - name: Assert that the help is the text written in this workflow
+        env:
+          HELP: |
+            Usage: install-kotlinstall.main.kts [<options>]
+
+            Options:
+              -h, --help  Show this message and exit
+        run: printf '%s' "$HELP" | diff --unified - "$RUNNER_TEMP/help.txt"
+
+  unrelated-files:
+    name: should not touch unrelated files when ${{ matrix.when }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - when: the installer script installs kotlinstall
+            arrange: |
+              version="$(sed -n 's/^kotlin = "\(.*\)"$/\1/p' gradle/libs.versions.toml)"
+              curl --fail --location --output /tmp/kotlin-compiler.zip "https://github.com/JetBrains/kotlin/releases/download/v$version/kotlin-compiler-$version.zip"
+              unzip /tmp/kotlin-compiler.zip -d /opt
+              rm /tmp/kotlin-compiler.zip
+              ln -s /opt/kotlinc/bin/kotlinc /opt/kotlinc/bin/kotlinr /usr/local/bin/
+            act: cat install-kotlinstall.main.kts | kotlinr -howtorun .main.kts /dev/stdin --git "file://$PWD"
+            allowlist: |
+              /root/.kotlinstall/*
+              /root/.gradle/*
+              /root/.konan/*
+              /tmp
+              /tmp/*
+          - when: it installs a program
+            arrange: ./gradlew linkReleaseExecutableLinuxX64
+            act: build/bin/linuxX64/releaseExecutable/kotlinstall.kexe install "file://$PWD"
+            allowlist: |
+              /root/.kotlinstall/*
+              /root/.gradle/*
+              /root/.konan/*
+              /tmp
+              /tmp/*
+          - when: it uninstalls a program
+            arrange: |
+              ./gradlew linkReleaseExecutableLinuxX64
+              build/bin/linuxX64/releaseExecutable/kotlinstall.kexe install "file://$PWD"
+            act: build/bin/linuxX64/releaseExecutable/kotlinstall.kexe uninstall kotlinstall
+            allowlist: |
+              /root/.kotlinstall/*
+    steps:
+      # Arrange
+      - *checkout
+
+      - name: Check every change that is made when ${{ matrix.when }}
+        uses: yuyuyuyuyu-dev/assert-no-unexpected-changes@v1
+        with:
+          workdir: /kotlinstall
+          arrange: |
+            apt-get update
+            apt-get install --yes --no-install-recommends ca-certificates curl git openjdk-21-jdk-headless unzip
+            ${{ matrix.arrange }}
+          # Act
+          act: ${{ matrix.act }}
+          # Assert
+          allowlist: ${{ matrix.allowlist }}

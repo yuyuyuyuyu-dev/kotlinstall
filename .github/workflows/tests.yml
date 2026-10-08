@@ -1,0 +1,212 @@
+name: Tests
+
+on:
+  pull_request:
+
+  push:
+    branches: ["main"]
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "tests-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux x64
+            runner: ubuntu-latest
+          - name: macOS Apple silicon
+            runner: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "21"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-home-cache-excludes: caches/build-cache-1
+
+      - name: Run tests
+        run: ./gradlew allTests
+
+  install-tag:
+    name: should install the given tag
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "21"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Build kotlinstall
+        run: ./gradlew linkReleaseExecutableLinuxX64
+
+      - name: Create a repository whose tag is behind its latest commit
+        env:
+          GIT_AUTHOR_NAME: kotlinstall
+          GIT_AUTHOR_EMAIL: kotlinstall@example.com
+          GIT_COMMITTER_NAME: kotlinstall
+          GIT_COMMITTER_EMAIL: kotlinstall@example.com
+        run: |
+          git archive --prefix=kotlinstall/ HEAD | tar -x -C "$RUNNER_TEMP"
+          cd "$RUNNER_TEMP/kotlinstall"
+          git init --quiet --initial-branch main
+          git add --all
+          git commit --quiet --message "Tagged"
+          git tag v1
+          git commit --quiet --allow-empty --message "After the tag"
+
+      - name: Install the tag
+        run: build/bin/linuxX64/releaseExecutable/kotlinstall.kexe install "file://$RUNNER_TEMP/kotlinstall" --tag v1
+
+      - name: Assert that the tagged commit was installed
+        run: |
+          revision="$(git -C "$RUNNER_TEMP/kotlinstall" rev-parse v1 | cut -c 1-7)"
+          ~/.kotlinstall/bin/kotlinstall list > "$RUNNER_TEMP/list.txt"
+          diff --unified - "$RUNNER_TEMP/list.txt" <<EOF
+          package:  kotlinstall
+          commands: kotlinstall
+          source:   file://$RUNNER_TEMP/kotlinstall --tag v1
+          revision: $revision
+          EOF
+
+  update-tag:
+    name: should keep a package at the tag that it was installed from
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "21"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Build kotlinstall
+        run: ./gradlew linkReleaseExecutableLinuxX64
+
+      - name: Create a repository with a tag
+        env:
+          GIT_AUTHOR_NAME: kotlinstall
+          GIT_AUTHOR_EMAIL: kotlinstall@example.com
+          GIT_COMMITTER_NAME: kotlinstall
+          GIT_COMMITTER_EMAIL: kotlinstall@example.com
+        run: |
+          git archive --prefix=kotlinstall/ HEAD | tar -x -C "$RUNNER_TEMP"
+          cd "$RUNNER_TEMP/kotlinstall"
+          git init --quiet --initial-branch main
+          git add --all
+          git commit --quiet --message "Tagged"
+          git tag v1
+
+      - name: Install the tag
+        run: build/bin/linuxX64/releaseExecutable/kotlinstall.kexe install "file://$RUNNER_TEMP/kotlinstall" --tag v1
+
+      - name: Add a commit after the tag
+        env:
+          GIT_AUTHOR_NAME: kotlinstall
+          GIT_AUTHOR_EMAIL: kotlinstall@example.com
+          GIT_COMMITTER_NAME: kotlinstall
+          GIT_COMMITTER_EMAIL: kotlinstall@example.com
+        run: git -C "$RUNNER_TEMP/kotlinstall" commit --quiet --allow-empty --message "After the tag"
+
+      - name: Update
+        run: ~/.kotlinstall/bin/kotlinstall update
+
+      - name: Assert that the package stayed at the tagged commit
+        run: |
+          revision="$(git -C "$RUNNER_TEMP/kotlinstall" rev-parse v1 | cut -c 1-7)"
+          ~/.kotlinstall/bin/kotlinstall list > "$RUNNER_TEMP/list.txt"
+          diff --unified - "$RUNNER_TEMP/list.txt" <<EOF
+          package:  kotlinstall
+          commands: kotlinstall
+          source:   file://$RUNNER_TEMP/kotlinstall --tag v1
+          revision: $revision
+          EOF
+
+  installer-tag:
+    name: should install the given tag with the installer script
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "21"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Create a repository whose tag is behind its latest commit
+        env:
+          GIT_AUTHOR_NAME: kotlinstall
+          GIT_AUTHOR_EMAIL: kotlinstall@example.com
+          GIT_COMMITTER_NAME: kotlinstall
+          GIT_COMMITTER_EMAIL: kotlinstall@example.com
+        run: |
+          git archive --prefix=kotlinstall/ HEAD | tar -x -C "$RUNNER_TEMP"
+          cd "$RUNNER_TEMP/kotlinstall"
+          git init --quiet --initial-branch main
+          git add --all
+          git commit --quiet --message "Tagged"
+          git tag v1
+          git commit --quiet --allow-empty --message "After the tag"
+
+      - name: Run the installer script with the tag
+        run: kotlinr -howtorun .main.kts /dev/stdin --git "file://$RUNNER_TEMP/kotlinstall" --tag v1 < install-kotlinstall.main.kts
+
+      - name: Assert that the tagged commit was installed
+        run: |
+          revision="$(git -C "$RUNNER_TEMP/kotlinstall" rev-parse v1 | cut -c 1-7)"
+          ~/.kotlinstall/bin/kotlinstall list > "$RUNNER_TEMP/list.txt"
+          diff --unified - "$RUNNER_TEMP/list.txt" <<EOF
+          package:  kotlinstall
+          commands: kotlinstall
+          source:   file://$RUNNER_TEMP/kotlinstall --tag v1
+          revision: $revision
+          EOF
+
+  unsupported-host:
+    name: should refuse a host that Kotlin/Native cannot build on
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Run the installer script expecting it to refuse the host
+        run: |
+          if kotlinr -howtorun .main.kts /dev/stdin --git "file://$GITHUB_WORKSPACE" < install-kotlinstall.main.kts > installer-output.log 2>&1; then
+            echo '::error::the installer unexpectedly succeeded'
+            exit 1
+          fi
+          grep --fixed-strings --line-regexp 'Error: Kotlin/Native cannot build programs on this host' installer-output.log || { echo '::error::the failure message is missing'; cat installer-output.log; exit 1; }
