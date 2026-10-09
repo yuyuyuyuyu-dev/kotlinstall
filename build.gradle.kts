@@ -8,26 +8,34 @@ import org.jetbrains.kotlin.konan.target.KonanTarget
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.detekt)
+    alias(libs.plugins.ktlint)
+    alias(libs.plugins.version.catalog.update)
+}
+
+detekt {
+    source.setFrom("src")
 }
 
 kotlin {
-    val host = when (HostManager.host) {
-        KonanTarget.MACOS_ARM64 -> macosArm64()
-        KonanTarget.MACOS_X64 -> macosX64()
-        KonanTarget.LINUX_X64 -> linuxX64()
-        else -> error("Kotlin/Native cannot build kotlinstall on this host")
-    }
+    val host =
+        when (HostManager.host) {
+            KonanTarget.MACOS_ARM64 -> macosArm64()
+            KonanTarget.MACOS_X64 -> macosX64()
+            KonanTarget.LINUX_X64 -> linuxX64()
+            else -> error("Kotlin/Native cannot build kotlinstall on this host")
+        }
     host.binaries.executable {
         entryPoint = "dev.yuyuyuyuyu.kotlinstall.main"
     }
 
     sourceSets {
-        nativeMain.dependencies {
+        commonMain.dependencies {
             implementation(libs.clikt.core)
             implementation(libs.okio)
             implementation(libs.kmp.process)
         }
-        nativeTest.dependencies {
+        commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
     }

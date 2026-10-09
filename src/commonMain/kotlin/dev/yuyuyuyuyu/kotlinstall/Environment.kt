@@ -13,5 +13,7 @@ import platform.posix.getuid
 fun environment(name: String): String? = getenv(name)?.toKString()?.takeIf { it.isNotBlank() }
 
 @OptIn(ExperimentalForeignApi::class)
-fun userHome(): Path =
-    (environment("HOME") ?: getpwuid(getuid())?.pointed?.pw_dir?.toKString() ?: fail("Could not find the home directory")).toPath()
+fun userHome(): Path {
+    val home = environment("HOME") ?: getpwuid(getuid())?.pointed?.pw_dir?.toKString()
+    return (home ?: fail("Could not find the home directory")).toPath()
+}

@@ -1,7 +1,7 @@
 package dev.yuyuyuyuyu.kotlinstall
 
-import com.github.ajalt.clikt.core.CoreCliktCommand
 import com.github.ajalt.clikt.core.Context
+import com.github.ajalt.clikt.core.CoreCliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
 

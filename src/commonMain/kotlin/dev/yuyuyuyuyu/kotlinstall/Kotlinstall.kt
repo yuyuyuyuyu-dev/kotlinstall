@@ -1,7 +1,7 @@
 package dev.yuyuyuyuyu.kotlinstall
 
-import com.github.ajalt.clikt.core.CoreCliktCommand
 import com.github.ajalt.clikt.core.Context
+import com.github.ajalt.clikt.core.CoreCliktCommand
 import com.github.ajalt.clikt.core.context
 import com.github.ajalt.clikt.core.main
 import com.github.ajalt.clikt.core.subcommands
@@ -22,6 +22,5 @@ fun main(args: Array<String>) {
             echoMessage = { _, message, trailingNewline, error -> echo(message, trailingNewline, error) }
             val suggest = suggestTypoCorrection
             suggestTypoCorrection = { entered, candidates -> suggest(entered, candidates - hidden) }
-        }
-        .main(args)
+        }.main(args)
 }

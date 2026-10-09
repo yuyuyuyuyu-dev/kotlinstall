@@ -6,20 +6,36 @@ import kotlin.system.exitProcess
 val usage = "Usage: install-kotlinstall.main.kts [<options>]"
 val help = "$usage\n\nOptions:\n  -h, --help  Show this message and exit"
 
-class Failure(message: String) : Exception(message)
+class Failure(
+    message: String,
+) : Exception(message)
 
-fun run(directory: File?, vararg command: String) {
+fun run(
+    directory: File?,
+    vararg command: String,
+) {
     println("\nRUN: `${command.joinToString(" ", transform = ::quote)}`")
-    val status = try {
-        ProcessBuilder(*command).directory(directory).inheritIO().start().waitFor()
-    } catch (e: IOException) {
-        throw Failure("Could not run ${command.first()}: ${e.message}")
-    }
+    val status =
+        try {
+            ProcessBuilder(*command)
+                .directory(directory)
+                .inheritIO()
+                .start()
+                .waitFor()
+        } catch (e: IOException) {
+            throw Failure("Could not run ${command.first()}: ${e.message}")
+        }
     if (status != 0) throw Failure("${command.joinToString(" ")} failed with exit code $status")
 }
 
 fun quote(argument: String) =
-    if (argument.isNotEmpty() && argument.all { it.isLetterOrDigit() || it in "%+,-./:=@_" }) argument else "'" + argument.replace("'", "'\\''") + "'"
+    if (argument.isNotEmpty() &&
+        argument.all { it.isLetterOrDigit() || it in "%+,-./:=@_" }
+    ) {
+        argument
+    } else {
+        "'" + argument.replace("'", "'\\''") + "'"
+    }
 
 fun announce(phase: String) {
     val title = "==> $phase"
@@ -27,12 +43,15 @@ fun announce(phase: String) {
     println("\n$rule\n$title\n$rule")
 }
 
-fun value(arguments: Iterator<String>, option: String) =
-    if (arguments.hasNext()) arguments.next() else throw Failure("$option needs a value\n$usage")
+fun value(
+    arguments: Iterator<String>,
+    option: String,
+) = if (arguments.hasNext()) arguments.next() else throw Failure("$option needs a value\n$usage")
 
 fun bin(): File {
-    val home = System.getenv("KOTLINSTALL_HOME")?.takeIf { it.isNotBlank() }
-        ?: "${System.getenv("HOME")?.takeIf { it.isNotBlank() } ?: System.getProperty("user.home")}/.kotlinstall"
+    val home =
+        System.getenv("KOTLINSTALL_HOME")?.takeIf { it.isNotBlank() }
+            ?: "${System.getenv("HOME")?.takeIf { it.isNotBlank() } ?: System.getProperty("user.home")}/.kotlinstall"
     return File(home, "bin").absoluteFile.normalize()
 }
 
@@ -78,13 +97,25 @@ fun install(arguments: Iterator<String>) {
         }
         run(source, "sh", "gradlew", "--no-daemon", "linkReleaseExecutable${target.replaceFirstChar(Char::uppercaseChar)}")
         announce("Installing kotlinstall using the temporary kotlinstall")
-        run(null, File(source, "build/bin/$target/releaseExecutable/kotlinstall.kexe").path, "install", repository, *reference.toTypedArray(), *options.toTypedArray())
+        run(
+            null,
+            File(source, "build/bin/$target/releaseExecutable/kotlinstall.kexe").path,
+            "install",
+            repository,
+            *reference.toTypedArray(),
+            *options.toTypedArray(),
+        )
     } finally {
         announce("Cleaning up the work directory")
         if (work.deleteRecursively()) println("Removed $work") else System.err.println("\nWarning: Could not remove $work")
     }
     val bin = bin()
-    if (System.getenv("PATH").orEmpty().split(':').none { it.isNotEmpty() && File(it).absoluteFile.normalize() == bin }) {
+    if (System
+            .getenv("PATH")
+            .orEmpty()
+            .split(':')
+            .none { it.isNotEmpty() && File(it).absoluteFile.normalize() == bin }
+    ) {
         System.err.println("\nWarning: $bin is not in PATH. Add it to run the installed commands, for example: export PATH=\"$bin:\$PATH\"")
     }
 }

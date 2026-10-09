@@ -16,7 +16,11 @@ fun announce(phase: String) {
 fun printError(message: String) = echo(message, trailingNewline = true, error = true)
 
 @OptIn(ExperimentalForeignApi::class)
-fun echo(message: Any?, trailingNewline: Boolean, error: Boolean) {
+fun echo(
+    message: Any?,
+    trailingNewline: Boolean,
+    error: Boolean,
+) {
     val text = if (trailingNewline) "$message\n" else message.toString()
     if (error) fputs(text, stderr) else print(text)
 }
