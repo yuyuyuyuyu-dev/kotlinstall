@@ -25,7 +25,10 @@ class InstallTest {
 
         // Assert
         assertEquals(0, outcome.status, "$outcome")
-        assertContains(outcome.output, "Installed hello ${revision.take(7)} (${repository.url})\n    ${sandbox.bin}/hello")
+        assertContains(
+            outcome.output,
+            "Installed hello ${revision.take(7)} (${repository.url})\n    ${sandbox.bin}/hello",
+        )
         assertEquals(Outcome(0, "Hello!", ""), sandbox.command("hello"))
     }
 
@@ -42,7 +45,9 @@ class InstallTest {
         assertContains(
             outcome.output,
             Regex(
-                "==> Getting the source code of hello\n.*RUN: `git clone .*==> Building hello\n.*RUN: `sh gradlew .*==> Installing hello\n",
+                "==> Getting the source code of hello\n.*RUN: `git clone .*" +
+                    "==> Building hello\n.*RUN: `sh gradlew .*" +
+                    "==> Installing hello\n",
                 RegexOption.DOT_MATCHES_ALL,
             ),
         )
@@ -133,7 +138,8 @@ class InstallTest {
     @Test
     fun `should refuse more than one of branch and tag and revision`() {
         // Act
-        val outcome = sandbox.kotlinstall("install", "file://${sandbox.root}/hello", "--branch", "next", "--rev", "0000000")
+        val url = "file://${sandbox.root}/hello"
+        val outcome = sandbox.kotlinstall("install", url, "--branch", "next", "--rev", "0000000")
 
         // Assert
         assertEquals(1, outcome.status, "$outcome")
@@ -383,7 +389,8 @@ class InstallTest {
         repository.write("settings.gradle.kts", settingsScript("hello"))
         repository.write(
             "build.gradle.kts",
-            "plugins {\n    kotlin(\"jvm\") version \"${setting("KOTLINSTALL_TEST_KOTLIN_VERSION")}\"\n    application\n}\n\n" +
+            "plugins {\n    kotlin(\"jvm\") version \"${setting("KOTLINSTALL_TEST_KOTLIN_VERSION")}\"\n" +
+                "    application\n}\n\n" +
                 "application {\n    mainClass = \"MainKt\"\n}\n",
         )
         repository.write("src/main/kotlin/Main.kt", mainFunction("main", "Hello!"))
@@ -397,7 +404,10 @@ class InstallTest {
         assertEquals(1, outcome.status, "$outcome")
         assertContains(
             outcome.error,
-            Regex("Error: No Kotlin/Native executables for \\w+ were found\\. Only Kotlin/Native executables can be installed\\."),
+            Regex(
+                "Error: No Kotlin/Native executables for \\w+ were found\\. " +
+                    "Only Kotlin/Native executables can be installed\\.",
+            ),
         )
         assertEquals(Outcome(0, "", ""), sandbox.kotlinstall("list"))
     }
@@ -528,11 +538,12 @@ class InstallTest {
         FileSystem.SYSTEM.createDirectories(user)
 
         // Act
-        val outcome = sandbox.kotlinstall(
-            "install",
-            repository.url,
-            environment = buildCaches() + mapOf("KOTLINSTALL_HOME" to null, "HOME" to user.toString()),
-        )
+        val outcome =
+            sandbox.kotlinstall(
+                "install",
+                repository.url,
+                environment = buildCaches() + mapOf("KOTLINSTALL_HOME" to null, "HOME" to user.toString()),
+            )
 
         // Assert
         assertEquals(0, outcome.status, "$outcome")

@@ -1,8 +1,11 @@
 [versions]
 clikt = "5.1.0"
+detekt = "1.23.8"
 kmp-process = "0.5.0"
 kotlin = "2.4.20"
+ktlint-gradle = "14.2.0"
 okio = "3.18.2"
+version-catalog-update = "1.1.1"
 
 [libraries]
 clikt-core = { module = "com.github.ajalt.clikt:clikt-core", version.ref = "clikt" }
@@ -11,4 +14,7 @@ kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotl
 okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
 
 [plugins]
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint-gradle" }
+version-catalog-update = { id = "nl.littlerobots.version-catalog-update", version.ref = "version-catalog-update" }

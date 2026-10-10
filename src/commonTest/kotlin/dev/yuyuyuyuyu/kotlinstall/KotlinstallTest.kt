@@ -7,7 +7,8 @@ import kotlin.test.assertEquals
 
 class KotlinstallTest {
     private val sandbox = Sandbox()
-    private val help = """
+    private val help =
+        """
         Usage: kotlinstall [<options>] <command> [<args>]...
 
           Install Kotlin/Native programs from Git repositories
@@ -19,7 +20,7 @@ class KotlinstallTest {
           install    Build a Kotlin/Native Gradle project from a Git repository and install its commands
           uninstall  Remove installed packages and their commands
           list       List the installed packages and their commands
-    """.trimIndent()
+        """.trimIndent()
 
     @AfterTest
     fun cleanUp() = sandbox.delete()

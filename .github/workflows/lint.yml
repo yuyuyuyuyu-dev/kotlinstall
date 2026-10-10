@@ -1,0 +1,85 @@
+name: Lint
+
+on:
+  pull_request:
+
+  push:
+    branches: ["main"]
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "lint-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  detekt:
+    name: Detekt
+    runs-on: ubuntu-latest
+    steps:
+      - &checkout
+        name: Checkout
+        uses: actions/checkout@v7
+
+      - &setup-java
+        name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "21"
+
+      - &setup-gradle
+        name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Run Detekt
+        run: ./gradlew detekt
+
+  ktlint:
+    name: ktlint
+    runs-on: ubuntu-latest
+    steps:
+      - *checkout
+
+      - *setup-java
+
+      - *setup-gradle
+
+      - name: Run ktlint
+        run: ./gradlew ktlintCheck
+
+  version-catalog:
+    name: Version catalog format
+    runs-on: ubuntu-latest
+    steps:
+      - *checkout
+
+      - *setup-java
+
+      - *setup-gradle
+
+      - name: Format the version catalog
+        run: ./gradlew versionCatalogFormat
+
+      - name: Assert that formatting changed nothing
+        run: git diff --exit-code
+
+  oxfmt:
+    name: Oxfmt
+    runs-on: ubuntu-latest
+    steps:
+      - *checkout
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install Oxfmt
+        run: npm ci
+
+      - name: Run Oxfmt
+        run: npx oxfmt --check

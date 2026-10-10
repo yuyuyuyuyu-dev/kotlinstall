@@ -26,26 +26,42 @@ import platform.posix.strerror
 
 val files = FileSystem.SYSTEM
 
-fun absolute(path: Path): Path = if (path.isAbsolute) path.normalized() else (files.canonicalize(".".toPath()) / path).normalized()
+private const val OCTAL = 8
 
-fun isDirectory(path: Path) = runCatching { files.metadata(files.canonicalize(path)).isDirectory }.getOrDefault(false)
+fun absolute(path: Path): Path = (if (path.isAbsolute) path else files.canonicalize(".".toPath()) / path).normalized()
 
-fun isRegularFile(path: Path) = runCatching { files.metadata(files.canonicalize(path)).isRegularFile }.getOrDefault(false)
+fun isDirectory(path: Path) = metadata(path)?.isDirectory == true
+
+fun isRegularFile(path: Path) = metadata(path)?.isRegularFile == true
+
+private fun metadata(path: Path) = runCatching { files.metadata(files.canonicalize(path)) }.getOrNull()
 
 @OptIn(ExperimentalForeignApi::class)
-fun createTemporaryDirectory(parent: Path, prefix: String): Path = memScoped {
-    val template = (parent / "${prefix}XXXXXX").toString().cstr.getPointer(this)
-    (mkdtemp(template) ?: fail("Could not create a directory in $parent: ${reason()}")).toKString().toPath()
+fun createTemporaryDirectory(
+    parent: Path,
+    prefix: String,
+): Path =
+    memScoped {
+        val template = (parent / "${prefix}XXXXXX").toString().cstr.getPointer(this)
+        (mkdtemp(template) ?: fail("Could not create a directory in $parent: ${reason()}")).toKString().toPath()
+    }
+
+@OptIn(ExperimentalForeignApi::class)
+fun setMode(
+    path: Path,
+    mode: String,
+) {
+    if (chmod(path.toString(), mode.toInt(OCTAL).convert()) != 0) {
+        fail("Could not change the permissions of $path: ${reason()}")
+    }
 }
 
 @OptIn(ExperimentalForeignApi::class)
-fun setMode(path: Path, mode: String) {
-    if (chmod(path.toString(), mode.toInt(8).convert()) != 0) fail("Could not change the permissions of $path: ${reason()}")
-}
-
-@OptIn(ExperimentalForeignApi::class)
-fun <T> withLock(file: Path, action: () -> T): T {
-    val descriptor = open(file.toString(), O_CREAT or O_WRONLY, "644".toInt(8))
+fun <T> withLock(
+    file: Path,
+    action: () -> T,
+): T {
+    val descriptor = open(file.toString(), O_CREAT or O_WRONLY, "644".toInt(OCTAL))
     if (descriptor < 0) fail("Could not open $file: ${reason()}")
     try {
         memScoped {

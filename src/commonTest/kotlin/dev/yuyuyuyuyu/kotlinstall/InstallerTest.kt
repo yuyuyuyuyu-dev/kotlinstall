@@ -12,12 +12,13 @@ import kotlin.test.assertNotNull
 class InstallerTest {
     private val sandbox = Sandbox()
     private val usage = "Usage: install-kotlinstall.main.kts [<options>]"
-    private val help = """
+    private val help =
+        """
         Usage: install-kotlinstall.main.kts [<options>]
 
         Options:
           -h, --help  Show this message and exit
-    """.trimIndent()
+        """.trimIndent()
 
     @AfterTest
     fun cleanUp() = sandbox.delete()
