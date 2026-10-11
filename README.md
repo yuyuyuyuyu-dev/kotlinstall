@@ -12,7 +12,10 @@ A tool that installs programs written in Kotlin straight from GitHub.
 
 ## Why it was made
 
-Other programming languages can install a program straight from GitHub, like `go install github.com/user/repository@latest` or `cargo install --git https://github.com/user/repository.git`. I envied that, so I made the same thing for Kotlin.
+I once needed a small command line tool that starts fast, and the choice came down to Kotlin/Native or Rust.
+Rust has `cargo install --git https://github.com/user/repository.git`, which installs a program straight from GitHub. Kotlin had nothing like it, so I chose Rust.
+
+But I could not give up on Kotlin, so I made kotlinstall.
 
 ## What it does
 
