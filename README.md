@@ -32,7 +32,7 @@ It clones the source code into a temporary directory and builds it, copies the r
 - Xcode, only on macOS. The Command Line Tools alone might be enough, but I have not tested that.
 - The Kotlin compiler with its `kotlinr` command, only to run the installer script
 
-### Install
+### Install kotlinstall
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/yuyuyuyuyu-dev/kotlinstall/main/install-kotlinstall.main.kts | kotlinr -howtorun .main.kts /dev/stdin
@@ -60,7 +60,7 @@ Commands:
   list       List the installed packages and their commands
 ```
 
-### Uninstall
+### Uninstall kotlinstall
 
 Everything kotlinstall installs, including kotlinstall itself, is in `~/.kotlinstall`. Removing that directory removes kotlinstall together with every program it installed:
 
