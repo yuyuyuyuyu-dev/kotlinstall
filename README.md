@@ -31,8 +31,7 @@ It clones the source code into a temporary directory and builds it, copies the r
 - macOS (Apple silicon or Intel) or Linux (x64)
 - Git
 - A JDK, which Gradle runs on
-- Gradle, only for projects that do not have the Gradle Wrapper (`gradlew`)
-- Xcode, only on macOS
+- Xcode, only on macOS. The Command Line Tools alone might be enough, but I have not tested that.
 - The Kotlin compiler with its `kotlinr` command, only to run the installer script
 
 ### Install
