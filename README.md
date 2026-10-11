@@ -44,20 +44,20 @@ The installer script builds kotlinstall from its source code and puts it in `~/.
 export PATH="$HOME/.kotlinstall/bin:$PATH"
 ```
 
-Then `kotlinstall --help` shows what it can do:
+### Install a program
 
-```text
-Usage: kotlinstall [<options>] <command> [<args>]...
+```bash
+kotlinstall install https://github.com/user/repository.git
+```
 
-  Install Kotlin/Native programs from Git repositories
+This installs the commands of the program into `~/.kotlinstall/bin`.
 
-Options:
-  -h, --help  Show this message and exit
+### Other commands
 
-Commands:
-  install    Build a Kotlin/Native Gradle project from a Git repository and install its commands
-  uninstall  Remove installed packages and their commands
-  list       List the installed packages and their commands
+See the help:
+
+```bash
+kotlinstall --help
 ```
 
 ### Uninstall kotlinstall
