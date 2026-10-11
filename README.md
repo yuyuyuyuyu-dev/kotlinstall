@@ -20,15 +20,13 @@ But I still love Kotlin and could not give up on it, so I made kotlinstall.
 ## What it does
 
 It installs programs written in Kotlin straight from GitHub.
-It clones the source code into a temporary directory and builds it, copies the result to `$KOTLINSTALL_HOME/packages/<package name>/`, links `$KOTLINSTALL_HOME/bin/<command name>` to it with a symbolic link, and then removes the whole temporary directory.
-
-`$KOTLINSTALL_HOME` is `~/.kotlinstall` unless you set it.
+It clones the source code into a temporary directory and builds it, copies the result to `~/.kotlinstall/packages/<package name>/`, links `~/.kotlinstall/bin/<command name>` to it with a symbolic link, and then removes the whole temporary directory.
 
 ## How to use
 
 ### Requirements
 
-- macOS (Apple silicon or Intel) or Linux (x64)
+- macOS or Linux
 - Git
 - A JDK, which Gradle runs on
 - Xcode, only on macOS. The Command Line Tools alone might be enough, but I have not tested that.
