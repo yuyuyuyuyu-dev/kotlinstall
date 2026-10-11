@@ -7,10 +7,7 @@ A tool that installs programs written in Kotlin straight from GitHub.
 - [Why it was made](#why-it-was-made)
 - [What it does](#what-it-does)
 - [How to use it](#how-to-use-it)
-  - [Requirements](#requirements)
-  - [Install](#install)
-  - [Uninstall](#uninstall)
-  - [Limitations](#limitations)
+- [Limitations](#limitations)
 - [License](#license)
 
 ## Why it was made
@@ -74,7 +71,7 @@ Then take `~/.kotlinstall/bin` out of `PATH`.
 
 Gradle and Kotlin/Native keep their own files, such as downloaded dependencies and compilers, in `~/.gradle` and `~/.konan`. Other tools use them too, so kotlinstall leaves them alone.
 
-### Limitations
+## Limitations
 
 Only Gradle projects are supported.
 Kotlin Toolchain projects are not. Kotlin Toolchain is still in Alpha and under active development, and its `kotlin` command has the same name as the `kotlin` command of the Kotlin compiler, which makes it hard to tell users how to run the installer script on a machine that has Kotlin Toolchain. Working that out was more trouble than it was worth for now, so I left out Kotlin Toolchain support altogether.
