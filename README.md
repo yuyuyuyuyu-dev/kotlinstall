@@ -6,7 +6,7 @@ A tool that installs programs written in Kotlin straight from GitHub.
 
 - [Why it was made](#why-it-was-made)
 - [What it does](#what-it-does)
-- [How to use it](#how-to-use-it)
+- [How to use](#how-to-use)
 - [Limitations](#limitations)
 - [License](#license)
 
@@ -21,7 +21,7 @@ It clones the source code into a temporary directory and builds it, copies the r
 
 `$KOTLINSTALL_HOME` is `~/.kotlinstall` unless you set it.
 
-## How to use it
+## How to use
 
 ### Requirements
 
