@@ -19,7 +19,10 @@ Other programming languages can install a program straight from GitHub, like `go
 
 ## What it does
 
-TODO
+It installs programs written in Kotlin straight from GitHub.
+It clones the source code into a temporary directory and builds it, copies the result to `$KOTLINSTALL_HOME/packages/<package name>/`, links `$KOTLINSTALL_HOME/bin/<command name>` to it with a symbolic link, and then removes the whole temporary directory.
+
+`$KOTLINSTALL_HOME` is `~/.kotlinstall` unless you set it.
 
 ## How to use it
 
