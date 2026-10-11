@@ -1,46 +1,85 @@
 # kotlinstall
 
-Kotlinで作ったものをGitHubから直接インストールするツール。
+A tool that installs programs written in Kotlin straight from GitHub.
 
-## 目次
+## Table of contents
+
+- [Why it was made](#why-it-was-made)
+- [What it does](#what-it-does)
+- [How to use it](#how-to-use-it)
+  - [Requirements](#requirements)
+  - [Install](#install)
+  - [Uninstall](#uninstall)
+  - [Limitations](#limitations)
+- [License](#license)
+
+## Why it was made
+
+Other programming languages can install a program straight from GitHub, like `go install github.com/user/repository@latest` or `cargo install --git https://github.com/user/repository.git`. I envied that, so I made the same thing for Kotlin.
+
+## What it does
 
 TODO
 
-## なぜ作られたのか
+## How to use it
 
-`go install https://github.com/user/repository.git` や `cargo install --git https://github.com/user/repository.git` のように作ったものをGitHubから直接インストールできる他のプログラミング言語が羨ましかったので、それのKotlin版を作りました。
+### Requirements
 
-## 何をするのか
+- macOS (Apple silicon or Intel) or Linux (x64)
+- Git
+- A JDK, which Gradle runs on
+- Gradle, only for projects that do not have the Gradle Wrapper (`gradlew`)
+- Xcode, only on macOS
+- The Kotlin compiler with its `kotlinr` command, only to run the installer script
 
-TODO
-
-## どのように使うのか
-
-### 前提条件
-
-TODO
-
-### インストール
+### Install
 
 ```bash
-TODO: kotlinstall本体のインストールコマンド
-ヘルプもここに載せる
+curl -fsSL https://raw.githubusercontent.com/yuyuyuyuyu-dev/kotlinstall/main/install-kotlinstall.main.kts | kotlinr -howtorun .main.kts /dev/stdin
 ```
 
-### アンインストール
+The installer script builds kotlinstall from its source code and puts it in `~/.kotlinstall/bin`. Add that directory to `PATH`:
 
 ```bash
-TODO: kotlinstall本体のアンインストール方法
+export PATH="$HOME/.kotlinstall/bin:$PATH"
 ```
 
-### 制約
+Then `kotlinstall --help` shows what it can do:
 
-Gradleプロジェクトのみ対応しています。
-TODO: Kotlin Toolchainはまだ開発中で `kotlin` というコマンド名の移行も完了していないしKotlinスクリプトの実行もまだサポートしていなくて、Kotlin Toolchainがインストールされている環境でのインストールスクリプトの実行方法の案内を考えるのがめんどくさかったからKotlin Toolchainのサポートを丸ごと外した、という経緯をいい感じに説明する。要事実確認。
+```text
+Usage: kotlinstall [<options>] <command> [<args>]...
 
-また、サポートしているのはKotlin/Nativeのもののみで、JVMのものはサポート外です。
-JVMのものをサポートしようとすると実行に必要なバージョンのJavaがインストールされていない時にどうするかを考える必要が出てきて、それを考えるのがめんどくさかったのでJVMで動くものはサポート外にしました。
+  Install Kotlin/Native programs from Git repositories
 
-### ライセンス
+Options:
+  -h, --help  Show this message and exit
 
-TODO
+Commands:
+  install    Build a Kotlin/Native Gradle project from a Git repository and install its commands
+  uninstall  Remove installed packages and their commands
+  list       List the installed packages and their commands
+```
+
+### Uninstall
+
+Everything kotlinstall installs, including kotlinstall itself, is in `~/.kotlinstall`. Removing that directory removes kotlinstall together with every program it installed:
+
+```bash
+rm -rf ~/.kotlinstall
+```
+
+Then take `~/.kotlinstall/bin` out of `PATH`.
+
+Gradle and Kotlin/Native keep their own files, such as downloaded dependencies and compilers, in `~/.gradle` and `~/.konan`. Other tools use them too, so kotlinstall leaves them alone.
+
+### Limitations
+
+Only Gradle projects are supported.
+Kotlin Toolchain projects are not. Kotlin Toolchain is still in Alpha and under active development, and its `kotlin` command has the same name as the `kotlin` command of the Kotlin compiler, which makes it hard to tell users how to run the installer script on a machine that has Kotlin Toolchain. Working that out was more trouble than it was worth for now, so I left out Kotlin Toolchain support altogether.
+
+Also, only Kotlin/Native programs are supported. Programs that run on the JVM are not.
+Supporting them would mean deciding what to do when the version of Java that a program needs is not installed. That was too much trouble to work out, so I left out programs that run on the JVM.
+
+## License
+
+[MIT](LICENSE)
