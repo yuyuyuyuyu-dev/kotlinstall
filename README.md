@@ -74,11 +74,11 @@ Gradle and Kotlin/Native keep their own files, such as downloaded dependencies a
 
 ## Limitations
 
-Only Gradle projects are supported.
-Kotlin Toolchain projects are not. Kotlin Toolchain is still in Alpha and under active development, and its `kotlin` command has the same name as the `kotlin` command of the Kotlin compiler, which makes it hard to tell users how to run the installer script on a machine that has Kotlin Toolchain. Working that out was more trouble than it was worth for now, so I left out Kotlin Toolchain support altogether.
+Only Gradle projects are supported. Kotlin Toolchain projects are not.
+Kotlin Toolchain is still in Alpha, and its `kotlin` command has the same name as the `kotlin` command of the Kotlin compiler. To support it, I would have to think about how to tell people to run the installer script on a machine that has Kotlin Toolchain. I did not feel like thinking about that, so this first version leaves Kotlin Toolchain out.
 
 Also, only Kotlin/Native programs are supported. Programs that run on the JVM are not.
-Supporting them would mean deciding what to do when the version of Java that a program needs is not installed. That was too much trouble to work out, so I left out programs that run on the JVM.
+To support them, I would have to think about what to do when the version of Java that a program needs is not installed. I did not feel like thinking about that either, so this first version leaves them out.
 
 ## License
 
