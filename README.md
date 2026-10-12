@@ -28,7 +28,7 @@ It clones the source code into a temporary directory and builds it, copies the r
 
 - macOS or Linux
 - Git
-- A JDK, to build kotlinstall and the programs you install. Tested with JDK 25.
+- A JDK, which the installer script and `kotlinstall install` need to build programs. Tested with JDK 25.
 - Xcode, only on macOS. The Command Line Tools alone might be enough, but I have not tested that.
 - The Kotlin compiler with its `kotlinr` command, only to run the installer script
 
