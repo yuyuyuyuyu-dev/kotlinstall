@@ -30,7 +30,7 @@ jobs:
         uses: actions/setup-java@v6
         with:
           distribution: zulu
-          java-version: "21"
+          java-version: "25"
 
       - &setup-gradle
         name: Setup Gradle
@@ -253,7 +253,7 @@ jobs:
           workdir: /kotlinstall
           arrange: |
             apt-get update
-            apt-get install --yes --no-install-recommends ca-certificates curl git openjdk-21-jdk-headless unzip
+            apt-get install --yes --no-install-recommends ca-certificates curl git openjdk-25-jdk-headless unzip
             ${{ matrix.arrange }}
           # Act
           act: ${{ matrix.act }}
