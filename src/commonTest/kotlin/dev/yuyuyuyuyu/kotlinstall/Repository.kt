@@ -20,11 +20,12 @@ class Repository(
         message: String,
         name: String = directory.name,
         wrapper: Boolean = true,
+        subdirectory: String = ".",
     ): String {
-        write("settings.gradle.kts", settingsScript(name))
-        write("build.gradle.kts", buildScript("target.binaries.executable()"))
-        write("src/nativeMain/kotlin/Main.kt", mainFunction("main", message))
-        if (wrapper) wrapper()
+        write("$subdirectory/settings.gradle.kts", settingsScript(name))
+        write("$subdirectory/build.gradle.kts", buildScript("target.binaries.executable()"))
+        write("$subdirectory/src/nativeMain/kotlin/Main.kt", mainFunction("main", message))
+        if (wrapper) wrapper(subdirectory)
         return commit()
     }
 
@@ -66,11 +67,12 @@ class Repository(
         return commit()
     }
 
-    fun wrapper() {
+    fun wrapper(subdirectory: String = ".") {
         val files = listOf("gradlew", "gradle/wrapper/gradle-wrapper.jar", "gradle/wrapper/gradle-wrapper.properties")
         files.forEach { file ->
-            FileSystem.SYSTEM.createDirectories((directory / file).parent!!)
-            FileSystem.SYSTEM.copy(project / file, directory / file)
+            val target = directory / subdirectory / file
+            FileSystem.SYSTEM.createDirectories(target.parent!!)
+            FileSystem.SYSTEM.copy(project / file, target)
         }
     }
 

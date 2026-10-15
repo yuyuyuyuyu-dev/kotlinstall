@@ -105,6 +105,26 @@ class UpdateTest {
     }
 
     @Test
+    fun `should build the subdirectory that the package was installed from`() {
+        // Arrange
+        val repository = sandbox.repository("monorepo")
+        repository.program("1", name = "hello", subdirectory = "hello")
+        sandbox.install(repository.url, "--subdirectory", "hello")
+        val revision = repository.program("2", name = "hello", subdirectory = "hello")
+
+        // Act
+        val outcome = sandbox.kotlinstall("update")
+
+        // Assert
+        assertEquals(0, outcome.status, "$outcome")
+        assertEquals(Outcome(0, "2", ""), sandbox.command("hello"))
+        assertEquals(
+            Outcome(0, listed("hello", revision, "${repository.url} --subdirectory hello", "hello"), ""),
+            sandbox.kotlinstall("list"),
+        )
+    }
+
+    @Test
     fun `should keep a package at the revision that it was installed from`() {
         // Arrange
         val repository = sandbox.repository("hello")

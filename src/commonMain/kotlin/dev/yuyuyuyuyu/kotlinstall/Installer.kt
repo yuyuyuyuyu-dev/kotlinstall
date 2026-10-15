@@ -10,12 +10,15 @@ class Installer(
 ) {
     fun install(
         source: String,
+        subdirectory: String?,
         reference: Reference?,
     ) {
-        val name = packageName(source)
+        val name = packageName(subdirectory ?: source)
         val host = Host.current() ?: fail("Kotlin/Native cannot build programs on this host")
         val installed = if (force) null else home.receipt(name)
-        if (installed != null && !installed.isFrom(source)) fail("$name is already installed from ${installed.source}")
+        if (installed != null && !installed.isFrom(source, subdirectory)) {
+            fail("$name is already installed from ${installed.origin}")
+        }
         val work = createTemporaryDirectory(FileSystem.SYSTEM_TEMPORARY_DIRECTORY, "kotlinstall-")
         try {
             val checkout = work / name
@@ -25,10 +28,14 @@ class Installer(
                 inform("$installed is up to date")
                 return
             }
-            if (!Gradle.isProject(checkout)) fail("$source is not a Gradle project")
+            val project = subdirectory?.let { checkout / it } ?: checkout
+            if (subdirectory != null && !isDirectory(project)) fail("$source has no directory $subdirectory")
+            if (!Gradle.isProject(project)) {
+                fail("${subdirectory?.let { "$it in " }.orEmpty()}$source is not a Gradle project")
+            }
             announce("Building $name")
-            val commands = select(Gradle.build(checkout, work, host), host)
-            val receipt = Receipt(name, source, reference, revision, commands.keys.sorted())
+            val commands = select(Gradle.build(project, work, host), host)
+            val receipt = Receipt(name, source, subdirectory, reference, revision, commands.keys.sorted())
             announce("Installing $name")
             home.lock { place(receipt, commands) }
             report(receipt)
