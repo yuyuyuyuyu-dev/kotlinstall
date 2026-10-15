@@ -18,7 +18,7 @@ class Repository(
 
     fun program(
         message: String,
-        name: String = directory.name,
+        name: String? = directory.name,
         wrapper: Boolean = true,
         subdirectory: String = ".",
     ): String {
@@ -134,11 +134,13 @@ val localSubmodules =
 val kotlinPlugin: String get() = "kotlin(\"multiplatform\") version \"${setting("KOTLINSTALL_TEST_KOTLIN_VERSION")}\""
 
 fun settingsScript(
-    name: String,
+    name: String?,
     projects: Collection<String> = emptyList(),
 ) = buildString {
-    appendLine("rootProject.name = \"$name\"")
-    appendLine()
+    if (name != null) {
+        appendLine("rootProject.name = \"$name\"")
+        appendLine()
+    }
     appendLine("dependencyResolutionManagement {")
     appendLine("    repositories {")
     appendLine("        mavenCentral()")

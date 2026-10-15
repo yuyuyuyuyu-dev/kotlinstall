@@ -68,9 +68,9 @@ class InstallTest {
     }
 
     @Test
-    fun `should name the package after the repository without the git suffix`() {
+    fun `should name the package after the Gradle project`() {
         // Arrange
-        val repository = sandbox.repository("hello.git")
+        val repository = sandbox.repository("hello-kt")
         val revision = repository.program("Hello!", name = "hello")
 
         // Act
@@ -79,6 +79,75 @@ class InstallTest {
         // Assert
         assertEquals(0, outcome.status, "$outcome")
         assertEquals(Outcome(0, listed("hello", revision, repository.url, "hello"), ""), sandbox.kotlinstall("list"))
+    }
+
+    @Test
+    fun `should name the package after the repository without the git suffix when the Gradle project has no name`() {
+        // Arrange
+        val repository = sandbox.repository("hello.git")
+        val revision = repository.program("Hello!", name = null)
+
+        // Act
+        val outcome = sandbox.kotlinstall("install", repository.url)
+
+        // Assert
+        assertEquals(0, outcome.status, "$outcome")
+        assertEquals(Outcome(0, listed("hello", revision, repository.url, "hello"), ""), sandbox.kotlinstall("list"))
+    }
+
+    @Test
+    fun `should refuse a Gradle project that cannot name a package`() {
+        // Arrange
+        val repository = sandbox.repository("hello")
+        repository.program("Hello!", name = "hello world")
+
+        // Act
+        val outcome = sandbox.kotlinstall("install", repository.url)
+
+        // Assert
+        assertEquals(1, outcome.status, "$outcome")
+        assertContains(outcome.error, "Error: Cannot name a package after the Gradle project hello world")
+        assertEquals(Outcome(0, "", ""), sandbox.kotlinstall("list"))
+    }
+
+    @Test
+    fun `should replace the package from the same source when its Gradle project is renamed`() {
+        // Arrange
+        val repository = sandbox.repository("hello")
+        repository.programs(mapOf("hello" to "1"))
+        sandbox.install(repository.url)
+        repository.programs(mapOf("hello" to "2"))
+        repository.write("settings.gradle.kts", settingsScript("greeter"))
+        val revision = repository.commit()
+
+        // Act
+        val outcome = sandbox.kotlinstall("install", repository.url)
+
+        // Assert
+        assertEquals(0, outcome.status, "$outcome")
+        assertEquals(Outcome(0, "2", ""), sandbox.command("hello"))
+        assertEquals(Outcome(0, listed("greeter", revision, repository.url, "hello"), ""), sandbox.kotlinstall("list"))
+    }
+
+    @Test
+    fun `should remove the commands of the package from the same source when its Gradle project is renamed`() {
+        // Arrange
+        val repository = sandbox.repository("hello")
+        repository.program("1", name = "hello")
+        sandbox.install(repository.url)
+        val revision = repository.program("2", name = "greeter")
+
+        // Act
+        val outcome = sandbox.kotlinstall("install", repository.url)
+
+        // Assert
+        assertEquals(0, outcome.status, "$outcome")
+        assertFalse(FileSystem.SYSTEM.exists(sandbox.bin / "hello"))
+        assertEquals(Outcome(0, "2", ""), sandbox.command("greeter"))
+        assertEquals(
+            Outcome(0, listed("greeter", revision, repository.url, "greeter"), ""),
+            sandbox.kotlinstall("list"),
+        )
     }
 
     @Test
@@ -136,7 +205,7 @@ class InstallTest {
     }
 
     @Test
-    fun `should install from the given subdirectory and name the package after it`() {
+    fun `should install the project in the given subdirectory`() {
         // Arrange
         val repository = sandbox.repository("monorepo")
         repository.write("README.md", "# monorepo\n")

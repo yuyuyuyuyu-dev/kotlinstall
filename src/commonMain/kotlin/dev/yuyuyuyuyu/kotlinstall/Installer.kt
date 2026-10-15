@@ -13,19 +13,16 @@ class Installer(
         subdirectory: String?,
         reference: Reference?,
     ) {
-        val name = packageName(subdirectory ?: source)
+        val directory = directoryName(subdirectory ?: source)
         val host = Host.current() ?: fail("Kotlin/Native cannot build programs on this host")
-        val installed = if (force) null else home.receipt(name)
-        if (installed != null && !installed.isFrom(source, subdirectory)) {
-            fail("$name is already installed from ${installed.origin}")
-        }
+        val previous = home.receipts().find { it.isFrom(source, subdirectory) }
         val work = createTemporaryDirectory(FileSystem.SYSTEM_TEMPORARY_DIRECTORY, "kotlinstall-")
         try {
-            val checkout = work / name
-            announce("Getting the source code of $name")
+            val checkout = work / directory
+            announce("Getting the source code of $directory")
             val revision = Git.clone(source, reference, checkout)
-            if (installed?.revision == revision) {
-                inform("$installed is up to date")
+            if (!force && previous?.revision == revision) {
+                inform("$previous is up to date")
                 return
             }
             val project = subdirectory?.let { checkout / it } ?: checkout
@@ -33,24 +30,33 @@ class Installer(
             if (!Gradle.isProject(project)) {
                 fail("${subdirectory?.let { "$it in " }.orEmpty()}$source is not a Gradle project")
             }
-            announce("Building $name")
-            val commands = select(Gradle.build(project, work, host), host)
+            announce("Building $directory")
+            val build = Gradle.build(project, work, host)
+            val name = packageName(build.project)
+            val commands = select(build.commands, host)
             val receipt = Receipt(name, source, subdirectory, reference, revision, commands.keys.sorted())
             announce("Installing $name")
-            home.lock { place(receipt, commands) }
+            home.lock { place(receipt, previous, commands) }
             report(receipt)
         } finally {
             files.deleteRecursively(work)
         }
     }
 
-    private fun packageName(source: String): String {
+    private fun directoryName(source: String): String {
         val name = source.substringAfterLast('/').substringAfterLast(':').removeSuffix(".git")
-        val plain = name.all { it.isLetterOrDigit() || it in "-_." }
-        if (name.isEmpty() || name.startsWith(".") || !plain) {
-            fail("Cannot name a package after $source")
-        }
+        if (!isPackageName(name)) fail("Cannot name a package after $source")
         return name
+    }
+
+    private fun packageName(project: String): String {
+        if (!isPackageName(project)) fail("Cannot name a package after the Gradle project $project")
+        return project
+    }
+
+    private fun isPackageName(name: String): Boolean {
+        val plain = name.all { it.isLetterOrDigit() || it in "-_." }
+        return name.isNotEmpty() && !name.startsWith(".") && plain
     }
 
     private fun select(
@@ -71,12 +77,20 @@ class Installer(
 
     private fun place(
         receipt: Receipt,
+        previous: Receipt?,
         commands: Map<String, Command>,
     ) {
+        val installed = home.receipt(receipt.name)
+        if (!force && installed != null && !installed.isFrom(receipt.source, receipt.subdirectory)) {
+            fail("${receipt.name} is already installed from ${installed.origin}")
+        }
         val conflicts =
-            home.conflicts(receipt.name, commands.keys).joinToString(", ") { command ->
-                home.owner(command)?.let { "$command (installed by $it)" } ?: command
-            }
+            home
+                .conflicts(receipt.name, commands.keys)
+                .filterNot { previous != null && home.owner(it) == previous.name }
+                .joinToString(", ") { command ->
+                    home.owner(command)?.let { "$command (installed by $it)" } ?: command
+                }
         if (conflicts.isNotEmpty()) {
             if (!force) fail("${home.bin} already has $conflicts")
             inform("Replacing $conflicts")
@@ -84,6 +98,7 @@ class Installer(
         val staging = home.stage(receipt.name)
         try {
             home.install(receipt, staging, commands.mapValues { (_, command) -> stage(staging, command) })
+            if (previous != null && previous.name != receipt.name) home.receipt(previous.name)?.let(home::uninstall)
         } finally {
             files.deleteRecursively(staging)
         }
