@@ -68,9 +68,9 @@ class InstallTest {
     }
 
     @Test
-    fun `should name the package after the repository without the git suffix`() {
+    fun `should name the package after the Gradle project`() {
         // Arrange
-        val repository = sandbox.repository("hello.git")
+        val repository = sandbox.repository("hello-kt")
         val revision = repository.program("Hello!", name = "hello")
 
         // Act
@@ -79,6 +79,75 @@ class InstallTest {
         // Assert
         assertEquals(0, outcome.status, "$outcome")
         assertEquals(Outcome(0, listed("hello", revision, repository.url, "hello"), ""), sandbox.kotlinstall("list"))
+    }
+
+    @Test
+    fun `should name the package after the repository without the git suffix when the Gradle project has no name`() {
+        // Arrange
+        val repository = sandbox.repository("hello.git")
+        val revision = repository.program("Hello!", name = null)
+
+        // Act
+        val outcome = sandbox.kotlinstall("install", repository.url)
+
+        // Assert
+        assertEquals(0, outcome.status, "$outcome")
+        assertEquals(Outcome(0, listed("hello", revision, repository.url, "hello"), ""), sandbox.kotlinstall("list"))
+    }
+
+    @Test
+    fun `should refuse a Gradle project that cannot name a package`() {
+        // Arrange
+        val repository = sandbox.repository("hello")
+        repository.program("Hello!", name = "hello world")
+
+        // Act
+        val outcome = sandbox.kotlinstall("install", repository.url)
+
+        // Assert
+        assertEquals(1, outcome.status, "$outcome")
+        assertContains(outcome.error, "Error: Cannot name a package after the Gradle project hello world")
+        assertEquals(Outcome(0, "", ""), sandbox.kotlinstall("list"))
+    }
+
+    @Test
+    fun `should replace the package from the same source when its Gradle project is renamed`() {
+        // Arrange
+        val repository = sandbox.repository("hello")
+        repository.programs(mapOf("hello" to "1"))
+        sandbox.install(repository.url)
+        repository.programs(mapOf("hello" to "2"))
+        repository.write("settings.gradle.kts", settingsScript("greeter"))
+        val revision = repository.commit()
+
+        // Act
+        val outcome = sandbox.kotlinstall("install", repository.url)
+
+        // Assert
+        assertEquals(0, outcome.status, "$outcome")
+        assertEquals(Outcome(0, "2", ""), sandbox.command("hello"))
+        assertEquals(Outcome(0, listed("greeter", revision, repository.url, "hello"), ""), sandbox.kotlinstall("list"))
+    }
+
+    @Test
+    fun `should remove the commands of the package from the same source when its Gradle project is renamed`() {
+        // Arrange
+        val repository = sandbox.repository("hello")
+        repository.program("1", name = "hello")
+        sandbox.install(repository.url)
+        val revision = repository.program("2", name = "greeter")
+
+        // Act
+        val outcome = sandbox.kotlinstall("install", repository.url)
+
+        // Assert
+        assertEquals(0, outcome.status, "$outcome")
+        assertFalse(FileSystem.SYSTEM.exists(sandbox.bin / "hello"))
+        assertEquals(Outcome(0, "2", ""), sandbox.command("greeter"))
+        assertEquals(
+            Outcome(0, listed("greeter", revision, repository.url, "greeter"), ""),
+            sandbox.kotlinstall("list"),
+        )
     }
 
     @Test
@@ -105,13 +174,13 @@ class InstallTest {
         repository.checkout("main")
 
         // Act
-        val outcome = sandbox.kotlinstall("install", repository.url, "--branch", "next")
+        val outcome = sandbox.kotlinstall("install", repository.url, "--branch=next")
 
         // Assert
         assertEquals(0, outcome.status, "$outcome")
         assertEquals(Outcome(0, "next", ""), sandbox.command("hello"))
         assertEquals(
-            Outcome(0, listed("hello", revision, "${repository.url} --branch next", "hello"), ""),
+            Outcome(0, listed("hello", revision, "${repository.url} --branch=next", "hello"), ""),
             sandbox.kotlinstall("list"),
         )
     }
@@ -124,22 +193,141 @@ class InstallTest {
         repository.program("second")
 
         // Act
-        val outcome = sandbox.kotlinstall("install", repository.url, "--rev", revision)
+        val outcome = sandbox.kotlinstall("install", repository.url, "--rev=$revision")
 
         // Assert
         assertEquals(0, outcome.status, "$outcome")
         assertEquals(Outcome(0, "first", ""), sandbox.command("hello"))
         assertEquals(
-            Outcome(0, listed("hello", revision, "${repository.url} --rev $revision", "hello"), ""),
+            Outcome(0, listed("hello", revision, "${repository.url} --rev=$revision", "hello"), ""),
             sandbox.kotlinstall("list"),
         )
+    }
+
+    @Test
+    fun `should install the project in the given subdirectory`() {
+        // Arrange
+        val repository = sandbox.repository("monorepo")
+        repository.write("README.md", "# monorepo\n")
+        val revision = repository.program("Hello!", name = "hello", subdirectory = "tools/hello")
+
+        // Act
+        val outcome = sandbox.kotlinstall("install", repository.url, "--subdirectory=tools/hello/")
+
+        // Assert
+        assertEquals(0, outcome.status, "$outcome")
+        assertContains(
+            outcome.output,
+            "Installed hello ${revision.take(7)} (${repository.url} --subdirectory=tools/hello)\n" +
+                "    ${sandbox.bin}/hello",
+        )
+        assertEquals(Outcome(0, "Hello!", ""), sandbox.command("hello"))
+        assertEquals(
+            Outcome(0, listed("hello", revision, "${repository.url} --subdirectory=tools/hello", "hello"), ""),
+            sandbox.kotlinstall("list"),
+        )
+    }
+
+    @Test
+    fun `should leave an up-to-date package from a subdirectory as it is`() {
+        // Arrange
+        val repository = sandbox.repository("monorepo")
+        val revision = repository.program("Hello!", name = "hello", subdirectory = "hello")
+        sandbox.install(repository.url, "--subdirectory=hello")
+
+        // Act
+        val outcome = sandbox.kotlinstall("install", repository.url, "--subdirectory=hello")
+
+        // Assert
+        assertEquals(0, outcome.status, "$outcome")
+        assertContains(
+            outcome.output.lines(),
+            "hello ${revision.take(7)} (${repository.url} --subdirectory=hello) is up to date",
+        )
+        assertFalse("Installed hello" in outcome.output, "$outcome")
+    }
+
+    @Test
+    fun `should refuse a package of the same name from another subdirectory`() {
+        // Arrange
+        val repository = sandbox.repository("monorepo")
+        repository.program("first", name = "hello", subdirectory = "first/hello")
+        repository.program("second", name = "hello", subdirectory = "second/hello")
+        sandbox.install(repository.url, "--subdirectory=first/hello")
+
+        // Act
+        val outcome = sandbox.kotlinstall("install", repository.url, "--subdirectory=second/hello")
+
+        // Assert
+        assertEquals(1, outcome.status, "$outcome")
+        assertContains(
+            outcome.error,
+            "Error: hello is already installed from ${repository.url} --subdirectory=first/hello",
+        )
+        assertEquals(Outcome(0, "first", ""), sandbox.command("hello"))
+    }
+
+    @Test
+    fun `should refuse a subdirectory that leaves the repository`() {
+        // Act
+        val outcome = sandbox.kotlinstall("install", "file://${sandbox.root}/hello", "--subdirectory=../hello")
+
+        // Assert
+        assertEquals(1, outcome.status, "$outcome")
+        assertContains(
+            outcome.error,
+            "Error: invalid value for --subdirectory: ../hello is not a directory in the repository",
+        )
+    }
+
+    @Test
+    fun `should refuse an absolute subdirectory`() {
+        // Act
+        val outcome = sandbox.kotlinstall("install", "file://${sandbox.root}/hello", "--subdirectory=/hello")
+
+        // Assert
+        assertEquals(1, outcome.status, "$outcome")
+        assertContains(
+            outcome.error,
+            "Error: invalid value for --subdirectory: /hello is not a directory in the repository",
+        )
+    }
+
+    @Test
+    fun `should fail when the repository has no such subdirectory`() {
+        // Arrange
+        val repository = sandbox.repository("monorepo")
+        repository.program("Hello!", name = "hello", subdirectory = "hello")
+
+        // Act
+        val outcome = sandbox.kotlinstall("install", repository.url, "--subdirectory=missing")
+
+        // Assert
+        assertEquals(1, outcome.status, "$outcome")
+        assertContains(outcome.error, "Error: ${repository.url} has no directory missing")
+        assertEquals(Outcome(0, "", ""), sandbox.kotlinstall("list"))
+    }
+
+    @Test
+    fun `should refuse a subdirectory that is not a Gradle project`() {
+        // Arrange
+        val repository = sandbox.repository("monorepo")
+        repository.write("docs/README.md", "# docs\n")
+        repository.commit()
+
+        // Act
+        val outcome = sandbox.kotlinstall("install", repository.url, "--subdirectory=docs")
+
+        // Assert
+        assertEquals(1, outcome.status, "$outcome")
+        assertContains(outcome.error, "Error: docs in ${repository.url} is not a Gradle project")
     }
 
     @Test
     fun `should refuse more than one of branch and tag and revision`() {
         // Act
         val url = "file://${sandbox.root}/hello"
-        val outcome = sandbox.kotlinstall("install", url, "--branch", "next", "--rev", "0000000")
+        val outcome = sandbox.kotlinstall("install", url, "--branch=next", "--rev=0000000")
 
         // Assert
         assertEquals(1, outcome.status, "$outcome")
@@ -572,7 +760,7 @@ class InstallTest {
         repository.commit()
 
         // Act
-        val outcome = sandbox.kotlinstall("install", repository.url, "--rev", revision, environment = localSubmodules)
+        val outcome = sandbox.kotlinstall("install", repository.url, "--rev=$revision", environment = localSubmodules)
 
         // Assert
         assertEquals(0, outcome.status, "$outcome")
@@ -611,7 +799,8 @@ class InstallTest {
                   Build a Kotlin/Native Gradle project from a Git repository and install its commands
 
                 Options:
-                  -h, --help  Show this message and exit
+                  --subdirectory=<subdirectory>  Directory of the Gradle project, relative to the root of the repository
+                  -h, --help                     Show this message and exit
 
                 Arguments:
                   <url>  URL or path of the Git repository

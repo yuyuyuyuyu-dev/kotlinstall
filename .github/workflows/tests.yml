@@ -80,7 +80,7 @@ jobs:
           git commit --quiet --allow-empty --message "After the tag"
 
       - name: Install the tag
-        run: build/bin/linuxX64/releaseExecutable/kotlinstall.kexe install "file://$RUNNER_TEMP/kotlinstall" --tag v1
+        run: build/bin/linuxX64/releaseExecutable/kotlinstall.kexe install "file://$RUNNER_TEMP/kotlinstall" --tag=v1
 
       - name: Assert that the tagged commit was installed
         run: |
@@ -89,7 +89,7 @@ jobs:
           diff --unified - "$RUNNER_TEMP/list.txt" <<EOF
           package:  kotlinstall
           commands: kotlinstall
-          source:   file://$RUNNER_TEMP/kotlinstall --tag v1
+          source:   file://$RUNNER_TEMP/kotlinstall --tag=v1
           revision: $revision
           EOF
 
@@ -127,7 +127,7 @@ jobs:
           git tag v1
 
       - name: Install the tag
-        run: build/bin/linuxX64/releaseExecutable/kotlinstall.kexe install "file://$RUNNER_TEMP/kotlinstall" --tag v1
+        run: build/bin/linuxX64/releaseExecutable/kotlinstall.kexe install "file://$RUNNER_TEMP/kotlinstall" --tag=v1
 
       - name: Add a commit after the tag
         env:
@@ -147,7 +147,7 @@ jobs:
           diff --unified - "$RUNNER_TEMP/list.txt" <<EOF
           package:  kotlinstall
           commands: kotlinstall
-          source:   file://$RUNNER_TEMP/kotlinstall --tag v1
+          source:   file://$RUNNER_TEMP/kotlinstall --tag=v1
           revision: $revision
           EOF
 
@@ -192,7 +192,7 @@ jobs:
           diff --unified - "$RUNNER_TEMP/list.txt" <<EOF
           package:  kotlinstall
           commands: kotlinstall
-          source:   file://$RUNNER_TEMP/kotlinstall --tag v1
+          source:   file://$RUNNER_TEMP/kotlinstall --tag=v1
           revision: $revision
           EOF
 

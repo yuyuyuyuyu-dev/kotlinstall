@@ -12,7 +12,7 @@ class ListCommand : CoreCliktCommand(name = "list") {
                 """
                 package:  ${receipt.name}
                 commands: ${receipt.commands.joinToString(", ")}
-                source:   ${listOfNotNull(receipt.source, receipt.reference).joinToString(" ")}
+                source:   ${receipt.origin}
                 revision: ${receipt.shortRevision}
                 """.trimIndent()
             }

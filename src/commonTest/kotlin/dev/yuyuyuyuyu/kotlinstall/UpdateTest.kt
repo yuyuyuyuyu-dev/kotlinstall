@@ -87,7 +87,7 @@ class UpdateTest {
         repository.program("main 1")
         repository.branch("next")
         repository.program("next 1")
-        sandbox.install(repository.url, "--branch", "next")
+        sandbox.install(repository.url, "--branch=next")
         val revision = repository.program("next 2")
         repository.checkout("main")
         repository.program("main 2")
@@ -99,7 +99,27 @@ class UpdateTest {
         assertEquals(0, outcome.status, "$outcome")
         assertEquals(Outcome(0, "next 2", ""), sandbox.command("hello"))
         assertEquals(
-            Outcome(0, listed("hello", revision, "${repository.url} --branch next", "hello"), ""),
+            Outcome(0, listed("hello", revision, "${repository.url} --branch=next", "hello"), ""),
+            sandbox.kotlinstall("list"),
+        )
+    }
+
+    @Test
+    fun `should build the subdirectory that the package was installed from`() {
+        // Arrange
+        val repository = sandbox.repository("monorepo")
+        repository.program("1", name = "hello", subdirectory = "hello")
+        sandbox.install(repository.url, "--subdirectory=hello")
+        val revision = repository.program("2", name = "hello", subdirectory = "hello")
+
+        // Act
+        val outcome = sandbox.kotlinstall("update")
+
+        // Assert
+        assertEquals(0, outcome.status, "$outcome")
+        assertEquals(Outcome(0, "2", ""), sandbox.command("hello"))
+        assertEquals(
+            Outcome(0, listed("hello", revision, "${repository.url} --subdirectory=hello", "hello"), ""),
             sandbox.kotlinstall("list"),
         )
     }
@@ -109,7 +129,7 @@ class UpdateTest {
         // Arrange
         val repository = sandbox.repository("hello")
         val revision = repository.program("first")
-        sandbox.install(repository.url, "--rev", revision)
+        sandbox.install(repository.url, "--rev=$revision")
         repository.program("second")
 
         // Act
@@ -119,7 +139,7 @@ class UpdateTest {
         assertEquals(0, outcome.status, "$outcome")
         assertContains(
             outcome.output.lines(),
-            "hello ${revision.take(7)} (${repository.url} --rev $revision) is up to date",
+            "hello ${revision.take(7)} (${repository.url} --rev=$revision) is up to date",
         )
         assertEquals(Outcome(0, "first", ""), sandbox.command("hello"))
     }

@@ -3,6 +3,11 @@ package dev.yuyuyuyuyu.kotlinstall
 import okio.Path
 import okio.Path.Companion.toPath
 
+data class Build(
+    val project: String,
+    val commands: List<Command>,
+)
+
 object Gradle {
     fun isProject(directory: Path) =
         listOf("settings.gradle.kts", "settings.gradle", "build.gradle.kts", "build.gradle")
@@ -12,10 +17,11 @@ object Gradle {
         project: Path,
         work: Path,
         host: Host,
-    ): List<Command> {
+    ): Build {
         val script = work / "kotlinstall.init.gradle"
         files.write(script) { writeUtf8(initScript) }
         val manifest = work / "gradle-executables.txt"
+        val name = work / "gradle-project.txt"
         val gradle = if (isRegularFile(project / "gradlew")) listOf("sh", "gradlew") else listOf("gradle")
         execute(
             gradle +
@@ -24,18 +30,24 @@ object Gradle {
                     "--init-script",
                     script.toString(),
                     "-Pkotlinstall.manifest=$manifest",
+                    "-Pkotlinstall.name=$name",
                     "-Pkotlinstall.host=${host.konanTarget}",
                     "kotlinstall",
                 ),
             project,
         )
-        if (!isRegularFile(manifest)) fail("Gradle did not report the executables of the project")
-        return files
-            .read(manifest) { readUtf8() }
-            .lines()
-            .filter { it.isNotBlank() }
-            .map { it.toPath() }
-            .map { Command(it.name.removeSuffix(".kexe"), it) }
+        if (!isRegularFile(manifest) || !isRegularFile(name)) {
+            fail("Gradle did not report the name and the executables of the project")
+        }
+        return Build(
+            files.read(name) { readUtf8() },
+            files
+                .read(manifest) { readUtf8() }
+                .lines()
+                .filter { it.isNotBlank() }
+                .map { it.toPath() }
+                .map { Command(it.name.removeSuffix(".kexe"), it) },
+        )
     }
 }
 
@@ -43,6 +55,7 @@ private val initScript =
     """
     def parameters = gradle.startParameter.projectProperties
     def manifest = new File(parameters['kotlinstall.manifest'])
+    def name = new File(parameters['kotlinstall.name'])
     def host = parameters['kotlinstall.host']
     def entries = []
     def required = []
@@ -81,6 +94,7 @@ private val initScript =
             dependsOn { required }
             doLast {
                 manifest.text = entries.join('\n')
+                name.text = root.name
             }
         }
     }

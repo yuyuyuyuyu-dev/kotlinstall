@@ -33,7 +33,7 @@ class UpdateCommand : CoreCliktCommand(name = "update") {
             }
         val failed =
             receipts.filterNot { receipt ->
-                runCatching { Installer(home, force).install(receipt.source, receipt.reference) }
+                runCatching { Installer(home, force).install(receipt.source, receipt.subdirectory, receipt.reference) }
                     .onFailure { printError(if (it is CliktError) it.message.orEmpty() else "Error: ${it.message}") }
                     .isSuccess
             }

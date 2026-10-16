@@ -14,7 +14,7 @@ data class Reference(
         REV("rev"),
     }
 
-    override fun toString() = "--${kind.option} $value"
+    override fun toString() = "--${kind.option}=$value"
 }
 
 object Git {

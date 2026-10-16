@@ -6,20 +6,27 @@ import okio.Path.Companion.toPath
 data class Receipt(
     val name: String,
     val source: String,
+    val subdirectory: String?,
     val reference: Reference?,
     val revision: String,
     val commands: List<String>,
 ) {
-    fun isFrom(repository: String) = source.removeSuffix(".git") == repository.removeSuffix(".git")
+    fun isFrom(
+        repository: String,
+        subdirectory: String?,
+    ) = source.removeSuffix(".git") == repository.removeSuffix(".git") && this.subdirectory == subdirectory
 
     val shortRevision = revision.take(SHORT_REVISION_LENGTH)
 
-    override fun toString() = "$name $shortRevision (" + listOfNotNull(source, reference).joinToString(" ") + ")"
+    val origin = listOfNotNull(source, subdirectory?.let { "--subdirectory=$it" }, reference).joinToString(" ")
+
+    override fun toString() = "$name $shortRevision ($origin)"
 
     fun write(directory: Path) {
         val properties =
             listOfNotNull(
                 "source" to source,
+                subdirectory?.let { "subdirectory" to it },
                 reference?.let { it.kind.option to it.value },
                 "revision" to revision,
                 "commands" to commands.joinToString(","),
@@ -42,6 +49,7 @@ data class Receipt(
                 Receipt(
                     name = directory.name,
                     source = source,
+                    subdirectory = properties["subdirectory"],
                     reference =
                         Reference.Kind.entries.firstNotNullOfOrNull { kind ->
                             properties[kind.option]?.let { Reference(kind, it) }

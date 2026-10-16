@@ -66,6 +66,49 @@ jobs:
       - name: Run the installed program
         run: ~/.kotlinstall/bin/kotlinstall --help
 
+  install-program-from-subdirectory:
+    name: should install a program from a project in a subdirectory of the repository
+    runs-on: macos-latest
+    steps:
+      # Arrange
+      - *checkout
+      - *setup-java
+      - *setup-gradle
+      - *build-kotlinstall
+
+      - name: Create a repository that has kotlinstall in a subdirectory named differently from its Gradle project
+        env:
+          GIT_AUTHOR_NAME: kotlinstall
+          GIT_AUTHOR_EMAIL: kotlinstall@example.com
+          GIT_COMMITTER_NAME: kotlinstall
+          GIT_COMMITTER_EMAIL: kotlinstall@example.com
+        run: |
+          mkdir "$RUNNER_TEMP/repository"
+          git archive --prefix=cli/ HEAD | tar -x -C "$RUNNER_TEMP/repository"
+          cd "$RUNNER_TEMP/repository"
+          git init --quiet --initial-branch main
+          git add --all
+          git commit --quiet --message "Add kotlinstall"
+
+      # Act
+      - name: Install kotlinstall from the subdirectory
+        run: build/bin/macosArm64/releaseExecutable/kotlinstall.kexe install "file://$RUNNER_TEMP/repository" --subdirectory=cli
+
+      # Assert
+      - name: Run the installed program
+        run: ~/.kotlinstall/bin/kotlinstall --help
+
+      - name: Assert that the package is named after the Gradle project
+        run: |
+          revision="$(git -C "$RUNNER_TEMP/repository" rev-parse HEAD | cut -c 1-7)"
+          ~/.kotlinstall/bin/kotlinstall list > "$RUNNER_TEMP/list.txt"
+          diff --unified - "$RUNNER_TEMP/list.txt" <<EOF
+          package:  kotlinstall
+          commands: kotlinstall
+          source:   file://$RUNNER_TEMP/repository --subdirectory=cli
+          revision: $revision
+          EOF
+
   uninstall-program:
     name: should uninstall a program written in Kotlin
     needs: install-program
@@ -144,7 +187,8 @@ jobs:
                 Build a Kotlin/Native Gradle project from a Git repository and install its commands
 
               Options:
-                -h, --help  Show this message and exit
+                --subdirectory=<subdirectory>  Directory of the Gradle project, relative to the root of the repository
+                -h, --help                     Show this message and exit
 
               Arguments:
                 <url>  URL or path of the Git repository

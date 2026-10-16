@@ -54,7 +54,7 @@ class InstallerTest {
         // Assert
         assertEquals(0, outcome.status, "$outcome")
         assertEquals(
-            Outcome(0, listed("kotlinstall", revision, "${source.url} --branch next", "kotlinstall"), ""),
+            Outcome(0, listed("kotlinstall", revision, "${source.url} --branch=next", "kotlinstall"), ""),
             sandbox.command("kotlinstall", "list"),
         )
     }
@@ -73,7 +73,7 @@ class InstallerTest {
         // Assert
         assertEquals(0, outcome.status, "$outcome")
         assertEquals(
-            Outcome(0, listed("kotlinstall", revision, "${source.url} --rev $revision", "kotlinstall"), ""),
+            Outcome(0, listed("kotlinstall", revision, "${source.url} --rev=$revision", "kotlinstall"), ""),
             sandbox.command("kotlinstall", "list"),
         )
     }
