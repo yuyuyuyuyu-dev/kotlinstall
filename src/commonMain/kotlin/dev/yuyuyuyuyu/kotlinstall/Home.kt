@@ -18,7 +18,7 @@ data class Receipt(
 
     val shortRevision = revision.take(SHORT_REVISION_LENGTH)
 
-    val origin = listOfNotNull(source, subdirectory?.let { "--subdirectory $it" }, reference).joinToString(" ")
+    val origin = listOfNotNull(source, subdirectory?.let { "--subdirectory=$it" }, reference).joinToString(" ")
 
     override fun toString() = "$name $shortRevision ($origin)"
 

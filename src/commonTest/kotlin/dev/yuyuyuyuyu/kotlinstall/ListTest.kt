@@ -28,7 +28,7 @@ class ListTest {
         second.program("main")
         second.branch("next")
         val secondRevision = second.program("next")
-        sandbox.kotlinstall("install", second.url, "--branch", "next")
+        sandbox.kotlinstall("install", second.url, "--branch=next")
         sandbox.kotlinstall("install", first.url)
 
         // Act
@@ -46,7 +46,7 @@ class ListTest {
 
                 package:  second
                 commands: second
-                source:   ${second.url} --branch next
+                source:   ${second.url} --branch=next
                 revision: ${secondRevision.take(7)}
                 """.trimIndent(),
                 "",

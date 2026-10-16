@@ -174,13 +174,13 @@ class InstallTest {
         repository.checkout("main")
 
         // Act
-        val outcome = sandbox.kotlinstall("install", repository.url, "--branch", "next")
+        val outcome = sandbox.kotlinstall("install", repository.url, "--branch=next")
 
         // Assert
         assertEquals(0, outcome.status, "$outcome")
         assertEquals(Outcome(0, "next", ""), sandbox.command("hello"))
         assertEquals(
-            Outcome(0, listed("hello", revision, "${repository.url} --branch next", "hello"), ""),
+            Outcome(0, listed("hello", revision, "${repository.url} --branch=next", "hello"), ""),
             sandbox.kotlinstall("list"),
         )
     }
@@ -193,13 +193,13 @@ class InstallTest {
         repository.program("second")
 
         // Act
-        val outcome = sandbox.kotlinstall("install", repository.url, "--rev", revision)
+        val outcome = sandbox.kotlinstall("install", repository.url, "--rev=$revision")
 
         // Assert
         assertEquals(0, outcome.status, "$outcome")
         assertEquals(Outcome(0, "first", ""), sandbox.command("hello"))
         assertEquals(
-            Outcome(0, listed("hello", revision, "${repository.url} --rev $revision", "hello"), ""),
+            Outcome(0, listed("hello", revision, "${repository.url} --rev=$revision", "hello"), ""),
             sandbox.kotlinstall("list"),
         )
     }
@@ -212,18 +212,18 @@ class InstallTest {
         val revision = repository.program("Hello!", name = "hello", subdirectory = "tools/hello")
 
         // Act
-        val outcome = sandbox.kotlinstall("install", repository.url, "--subdirectory", "tools/hello/")
+        val outcome = sandbox.kotlinstall("install", repository.url, "--subdirectory=tools/hello/")
 
         // Assert
         assertEquals(0, outcome.status, "$outcome")
         assertContains(
             outcome.output,
-            "Installed hello ${revision.take(7)} (${repository.url} --subdirectory tools/hello)\n" +
+            "Installed hello ${revision.take(7)} (${repository.url} --subdirectory=tools/hello)\n" +
                 "    ${sandbox.bin}/hello",
         )
         assertEquals(Outcome(0, "Hello!", ""), sandbox.command("hello"))
         assertEquals(
-            Outcome(0, listed("hello", revision, "${repository.url} --subdirectory tools/hello", "hello"), ""),
+            Outcome(0, listed("hello", revision, "${repository.url} --subdirectory=tools/hello", "hello"), ""),
             sandbox.kotlinstall("list"),
         )
     }
@@ -233,16 +233,16 @@ class InstallTest {
         // Arrange
         val repository = sandbox.repository("monorepo")
         val revision = repository.program("Hello!", name = "hello", subdirectory = "hello")
-        sandbox.install(repository.url, "--subdirectory", "hello")
+        sandbox.install(repository.url, "--subdirectory=hello")
 
         // Act
-        val outcome = sandbox.kotlinstall("install", repository.url, "--subdirectory", "hello")
+        val outcome = sandbox.kotlinstall("install", repository.url, "--subdirectory=hello")
 
         // Assert
         assertEquals(0, outcome.status, "$outcome")
         assertContains(
             outcome.output.lines(),
-            "hello ${revision.take(7)} (${repository.url} --subdirectory hello) is up to date",
+            "hello ${revision.take(7)} (${repository.url} --subdirectory=hello) is up to date",
         )
         assertFalse("Installed hello" in outcome.output, "$outcome")
     }
@@ -253,16 +253,16 @@ class InstallTest {
         val repository = sandbox.repository("monorepo")
         repository.program("first", name = "hello", subdirectory = "first/hello")
         repository.program("second", name = "hello", subdirectory = "second/hello")
-        sandbox.install(repository.url, "--subdirectory", "first/hello")
+        sandbox.install(repository.url, "--subdirectory=first/hello")
 
         // Act
-        val outcome = sandbox.kotlinstall("install", repository.url, "--subdirectory", "second/hello")
+        val outcome = sandbox.kotlinstall("install", repository.url, "--subdirectory=second/hello")
 
         // Assert
         assertEquals(1, outcome.status, "$outcome")
         assertContains(
             outcome.error,
-            "Error: hello is already installed from ${repository.url} --subdirectory first/hello",
+            "Error: hello is already installed from ${repository.url} --subdirectory=first/hello",
         )
         assertEquals(Outcome(0, "first", ""), sandbox.command("hello"))
     }
@@ -270,7 +270,7 @@ class InstallTest {
     @Test
     fun `should refuse a subdirectory that leaves the repository`() {
         // Act
-        val outcome = sandbox.kotlinstall("install", "file://${sandbox.root}/hello", "--subdirectory", "../hello")
+        val outcome = sandbox.kotlinstall("install", "file://${sandbox.root}/hello", "--subdirectory=../hello")
 
         // Assert
         assertEquals(1, outcome.status, "$outcome")
@@ -283,7 +283,7 @@ class InstallTest {
     @Test
     fun `should refuse an absolute subdirectory`() {
         // Act
-        val outcome = sandbox.kotlinstall("install", "file://${sandbox.root}/hello", "--subdirectory", "/hello")
+        val outcome = sandbox.kotlinstall("install", "file://${sandbox.root}/hello", "--subdirectory=/hello")
 
         // Assert
         assertEquals(1, outcome.status, "$outcome")
@@ -300,7 +300,7 @@ class InstallTest {
         repository.program("Hello!", name = "hello", subdirectory = "hello")
 
         // Act
-        val outcome = sandbox.kotlinstall("install", repository.url, "--subdirectory", "missing")
+        val outcome = sandbox.kotlinstall("install", repository.url, "--subdirectory=missing")
 
         // Assert
         assertEquals(1, outcome.status, "$outcome")
@@ -316,7 +316,7 @@ class InstallTest {
         repository.commit()
 
         // Act
-        val outcome = sandbox.kotlinstall("install", repository.url, "--subdirectory", "docs")
+        val outcome = sandbox.kotlinstall("install", repository.url, "--subdirectory=docs")
 
         // Assert
         assertEquals(1, outcome.status, "$outcome")
@@ -327,7 +327,7 @@ class InstallTest {
     fun `should refuse more than one of branch and tag and revision`() {
         // Act
         val url = "file://${sandbox.root}/hello"
-        val outcome = sandbox.kotlinstall("install", url, "--branch", "next", "--rev", "0000000")
+        val outcome = sandbox.kotlinstall("install", url, "--branch=next", "--rev=0000000")
 
         // Assert
         assertEquals(1, outcome.status, "$outcome")
@@ -760,7 +760,7 @@ class InstallTest {
         repository.commit()
 
         // Act
-        val outcome = sandbox.kotlinstall("install", repository.url, "--rev", revision, environment = localSubmodules)
+        val outcome = sandbox.kotlinstall("install", repository.url, "--rev=$revision", environment = localSubmodules)
 
         // Assert
         assertEquals(0, outcome.status, "$outcome")

@@ -92,7 +92,7 @@ jobs:
 
       # Act
       - name: Install kotlinstall from the subdirectory
-        run: build/bin/macosArm64/releaseExecutable/kotlinstall.kexe install "file://$RUNNER_TEMP/repository" --subdirectory cli
+        run: build/bin/macosArm64/releaseExecutable/kotlinstall.kexe install "file://$RUNNER_TEMP/repository" --subdirectory=cli
 
       # Assert
       - name: Run the installed program
@@ -105,7 +105,7 @@ jobs:
           diff --unified - "$RUNNER_TEMP/list.txt" <<EOF
           package:  kotlinstall
           commands: kotlinstall
-          source:   file://$RUNNER_TEMP/repository --subdirectory cli
+          source:   file://$RUNNER_TEMP/repository --subdirectory=cli
           revision: $revision
           EOF
 

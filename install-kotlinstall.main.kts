@@ -102,7 +102,7 @@ fun install(arguments: Iterator<String>) {
             File(source, "build/bin/$target/releaseExecutable/kotlinstall.kexe").path,
             "install",
             repository,
-            *reference.toTypedArray(),
+            *listOfNotNull(reference.takeIf { it.isNotEmpty() }?.joinToString("=")).toTypedArray(),
             *options.toTypedArray(),
         )
     } finally {
