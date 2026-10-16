@@ -76,7 +76,7 @@ jobs:
       - *setup-gradle
       - *build-kotlinstall
 
-      - name: Create a repository that has kotlinstall in a subdirectory
+      - name: Create a repository that has kotlinstall in a subdirectory named differently from its Gradle project
         env:
           GIT_AUTHOR_NAME: kotlinstall
           GIT_AUTHOR_EMAIL: kotlinstall@example.com
@@ -84,7 +84,7 @@ jobs:
           GIT_COMMITTER_EMAIL: kotlinstall@example.com
         run: |
           mkdir "$RUNNER_TEMP/repository"
-          git archive --prefix=kotlinstall/ HEAD | tar -x -C "$RUNNER_TEMP/repository"
+          git archive --prefix=cli/ HEAD | tar -x -C "$RUNNER_TEMP/repository"
           cd "$RUNNER_TEMP/repository"
           git init --quiet --initial-branch main
           git add --all
@@ -92,11 +92,22 @@ jobs:
 
       # Act
       - name: Install kotlinstall from the subdirectory
-        run: build/bin/macosArm64/releaseExecutable/kotlinstall.kexe install "file://$RUNNER_TEMP/repository" --subdirectory kotlinstall
+        run: build/bin/macosArm64/releaseExecutable/kotlinstall.kexe install "file://$RUNNER_TEMP/repository" --subdirectory cli
 
       # Assert
       - name: Run the installed program
         run: ~/.kotlinstall/bin/kotlinstall --help
+
+      - name: Assert that the package is named after the Gradle project
+        run: |
+          revision="$(git -C "$RUNNER_TEMP/repository" rev-parse HEAD | cut -c 1-7)"
+          ~/.kotlinstall/bin/kotlinstall list > "$RUNNER_TEMP/list.txt"
+          diff --unified - "$RUNNER_TEMP/list.txt" <<EOF
+          package:  kotlinstall
+          commands: kotlinstall
+          source:   file://$RUNNER_TEMP/repository --subdirectory cli
+          revision: $revision
+          EOF
 
   uninstall-program:
     name: should uninstall a program written in Kotlin
