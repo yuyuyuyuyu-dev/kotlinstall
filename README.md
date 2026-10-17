@@ -1,6 +1,6 @@
 # kotlinstall
 
-A tool that installs programs written in Kotlin straight from GitHub.
+A tool that installs programs written in Kotlin directly from GitHub repositories.
 
 ## Table of contents
 
