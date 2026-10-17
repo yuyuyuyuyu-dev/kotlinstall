@@ -1,6 +1,6 @@
 # kotlinstall
 
-A tool that installs programs written in Kotlin straight from GitHub.
+A tool that installs programs written in Kotlin directly from GitHub repositories.
 
 ## Table of contents
 
@@ -13,13 +13,13 @@ A tool that installs programs written in Kotlin straight from GitHub.
 ## Why it was made
 
 I once needed a small command line tool that starts fast, and the choice came down to Kotlin/Native or Rust.
-Rust has `cargo install --git https://github.com/user/repository.git`, which installs a program straight from GitHub. Kotlin had nothing like it, so I chose Rust.
+Rust has `cargo install --git https://github.com/user/repository.git`, which installs a program directly from GitHub. Kotlin had nothing like it, so I chose Rust.
 
 But I still love Kotlin and could not give up on it, so I made kotlinstall.
 
 ## What it does
 
-It installs programs written in Kotlin straight from GitHub.
+It installs programs written in Kotlin directly from GitHub.
 It clones the source code into a temporary directory and builds it, copies the result to `~/.kotlinstall/packages/<package name>/`, links `~/.kotlinstall/bin/<command name>` to it with a symbolic link, and then removes the whole temporary directory.
 
 ## How to use
