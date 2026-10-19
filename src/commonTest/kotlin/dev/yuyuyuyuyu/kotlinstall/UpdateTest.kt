@@ -210,4 +210,27 @@ class UpdateTest {
             sandbox.command("kotlinstall", "list"),
         )
     }
+
+    @Test
+    fun `should print its help with --help`() {
+        // Act
+        val outcome = sandbox.kotlinstall("update", "--help")
+
+        // Assert
+        assertEquals(
+            Outcome(
+                0,
+                """
+                Usage: kotlinstall update [<options>]
+
+                  Reinstall packages when their sources have new commits
+
+                Options:
+                  -h, --help  Show this message and exit
+                """.trimIndent(),
+                "",
+            ),
+            outcome,
+        )
+    }
 }

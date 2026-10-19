@@ -18,6 +18,7 @@ class KotlinstallTest {
 
         Commands:
           install    Build a Kotlin/Native Gradle project from a Git repository and install its commands
+          update     Reinstall packages when their sources have new commits
           uninstall  Remove installed packages and their commands
           list       List the installed packages and their commands
         """.trimIndent()
@@ -51,17 +52,5 @@ class KotlinstallTest {
         // Assert
         assertEquals(1, outcome.status, "$outcome")
         assertContains(outcome.error, "Error: no such subcommand upgrade")
-    }
-
-    @Test
-    fun `should not suggest a command that its help leaves out`() {
-        // Act
-        val outcome = sandbox.kotlinstall("updat")
-
-        // Assert
-        assertEquals(
-            Outcome(1, "", "Usage: kotlinstall [<options>] <command> [<args>]...\n\nError: no such subcommand updat"),
-            outcome,
-        )
     }
 }
