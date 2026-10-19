@@ -177,49 +177,10 @@ jobs:
       - *build-kotlinstall
 
       - name: Create a repository of kotlinstall
-        run: |
-          mkdir "$RUNNER_TEMP/kotlinstall"
-          git archive HEAD | tar -x -C "$RUNNER_TEMP/kotlinstall"
-          cd "$RUNNER_TEMP/kotlinstall"
-          git init --quiet --initial-branch main
-          git add --all
-          git commit --quiet --message "Add kotlinstall"
+        run: .github/specs/update-packages/create-kotlinstall-repository.sh "$RUNNER_TEMP/kotlinstall"
 
       - name: Create a repository of another program
-        run: |
-          version="$(sed -n 's/^kotlin = "\(.*\)"$/\1/p' gradle/libs.versions.toml)"
-          mkdir -p "$RUNNER_TEMP/hello/gradle" "$RUNNER_TEMP/hello/src/macosArm64Main/kotlin"
-          cp gradlew "$RUNNER_TEMP/hello/"
-          cp -R gradle/wrapper "$RUNNER_TEMP/hello/gradle/"
-          cd "$RUNNER_TEMP/hello"
-          cat > settings.gradle.kts <<EOF
-          rootProject.name = "hello"
-
-          dependencyResolutionManagement {
-              repositories {
-                  mavenCentral()
-              }
-          }
-          EOF
-          cat > build.gradle.kts <<EOF
-          plugins {
-              kotlin("multiplatform") version "$version"
-          }
-
-          kotlin {
-              macosArm64 {
-                  binaries.executable()
-              }
-          }
-          EOF
-          cat > src/macosArm64Main/kotlin/Main.kt <<EOF
-          fun main() {
-              println("Hello, 1")
-          }
-          EOF
-          git init --quiet --initial-branch main
-          git add --all
-          git commit --quiet --message "Add hello"
+        run: .github/specs/update-packages/create-hello-repository.sh "$RUNNER_TEMP/hello"
 
       - name: Install kotlinstall and the other program
         run: |
@@ -227,16 +188,10 @@ jobs:
           build/bin/macosArm64/releaseExecutable/kotlinstall.kexe install "file://$RUNNER_TEMP/hello"
 
       - name: Add a commit that changes the description of kotlinstall
-        run: |
-          cd "$RUNNER_TEMP/kotlinstall"
-          sed -i '' 's/"Install Kotlin\/Native programs from Git repositories"/"Updated by a new commit"/' src/commonMain/kotlin/dev/yuyuyuyuyu/kotlinstall/Kotlinstall.kt
-          git commit --quiet --all --message "Change the description"
+        run: .github/specs/update-packages/change-kotlinstall.sh "$RUNNER_TEMP/kotlinstall"
 
       - name: Add a commit that changes the message of the other program
-        run: |
-          cd "$RUNNER_TEMP/hello"
-          sed -i '' 's/Hello, 1/Hello, 2/' src/macosArm64Main/kotlin/Main.kt
-          git commit --quiet --all --message "Change the message"
+        run: .github/specs/update-packages/change-hello.sh "$RUNNER_TEMP/hello"
 
       # Act
       - name: Update every package with the installed kotlinstall
