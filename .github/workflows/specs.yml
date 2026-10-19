@@ -176,19 +176,16 @@ jobs:
       - *setup-gradle
       - *build-kotlinstall
 
-      - name: Create a repository of kotlinstall
-        run: .github/specs/update-packages/create-kotlinstall-repository.sh "$RUNNER_TEMP/kotlinstall"
-
       - name: Create a repository of another program
         run: .github/specs/update-packages/create-hello-repository.sh "$RUNNER_TEMP/hello"
 
       - name: Install kotlinstall and the other program
         run: |
-          build/bin/macosArm64/releaseExecutable/kotlinstall.kexe install "file://$RUNNER_TEMP/kotlinstall"
+          build/bin/macosArm64/releaseExecutable/kotlinstall.kexe install "file://$GITHUB_WORKSPACE"
           build/bin/macosArm64/releaseExecutable/kotlinstall.kexe install "file://$RUNNER_TEMP/hello"
 
       - name: Add a commit that changes the description of kotlinstall
-        run: .github/specs/update-packages/change-kotlinstall.sh "$RUNNER_TEMP/kotlinstall"
+        run: .github/specs/update-packages/change-kotlinstall.sh "$GITHUB_WORKSPACE"
 
       - name: Add a commit that changes the message of the other program
         run: .github/specs/update-packages/change-hello.sh "$RUNNER_TEMP/hello"
@@ -211,7 +208,7 @@ jobs:
       - name: Assert that the list shows the new revisions
         run: |
           hello="$(git -C "$RUNNER_TEMP/hello" rev-parse HEAD | cut -c 1-7)"
-          kotlinstall="$(git -C "$RUNNER_TEMP/kotlinstall" rev-parse HEAD | cut -c 1-7)"
+          kotlinstall="$(git rev-parse HEAD | cut -c 1-7)"
           ~/.kotlinstall/bin/kotlinstall list > "$RUNNER_TEMP/list.txt"
           diff --unified - "$RUNNER_TEMP/list.txt" <<EOF
           package:  hello
@@ -221,7 +218,7 @@ jobs:
 
           package:  kotlinstall
           commands: kotlinstall
-          source:   file://$RUNNER_TEMP/kotlinstall
+          source:   file://$GITHUB_WORKSPACE
           revision: $kotlinstall
           EOF
 
