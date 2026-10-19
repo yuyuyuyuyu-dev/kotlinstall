@@ -1,6 +1,6 @@
 # kotlinstall
 
-A tool that installs programs written in Kotlin directly from GitHub repositories.
+A tool that installs programs written in Kotlin directly from GitHub repositories, like `go install` for Go and `cargo install --git` for Rust.
 
 ## Table of contents
 
