@@ -3,14 +3,13 @@ package dev.yuyuyuyuyu.kotlinstall
 import com.github.ajalt.clikt.core.CliktError
 import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.CoreCliktCommand
+import com.github.ajalt.clikt.output.HelpFormatter
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 
 class UpdateCommand : CoreCliktCommand(name = "update") {
-    override val hiddenFromHelp = true
-
     override fun help(context: Context) = "Reinstall packages when their sources have new commits"
 
     private val names by argument(
@@ -21,7 +20,10 @@ class UpdateCommand : CoreCliktCommand(name = "update") {
     private val force by option(
         "--force",
         help = "Reinstall even if up to date, and take over commands of other packages",
+        hidden = true,
     ).flag()
+
+    override fun allHelpParams() = super.allHelpParams().filterNot { it is HelpFormatter.ParameterHelp.Argument }
 
     override fun run() {
         val home = Home.current()
