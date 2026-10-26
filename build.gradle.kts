@@ -17,6 +17,10 @@ detekt {
     source.setFrom("src")
 }
 
+ktlint {
+    version = libs.versions.ktlintCli.get()
+}
+
 kotlin {
     val host =
         when (HostManager.host) {

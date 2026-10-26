@@ -25,7 +25,7 @@ object Git {
     ): String {
         val destination = directory.toString()
         when (reference?.kind) {
-            null ->
+            null -> {
                 execute(
                     listOf(
                         "git",
@@ -38,7 +38,9 @@ object Git {
                         destination,
                     ),
                 )
-            Reference.Kind.BRANCH, Reference.Kind.TAG ->
+            }
+
+            Reference.Kind.BRANCH, Reference.Kind.TAG -> {
                 execute(
                     listOf(
                         "git",
@@ -53,6 +55,8 @@ object Git {
                         destination,
                     ),
                 )
+            }
+
             Reference.Kind.REV -> {
                 execute(listOf("git", "clone", "--no-checkout", repository, destination))
                 execute(listOf("git", "checkout", "--detach", reference.value), directory)

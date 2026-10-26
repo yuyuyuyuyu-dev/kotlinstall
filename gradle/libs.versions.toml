@@ -4,6 +4,7 @@ detekt = "2.0.0-alpha.6"
 kmp-process = "0.5.0"
 kotlin = "2.4.21"
 ktlint-gradle = "14.2.0"
+ktlintCli = "1.8.0"
 okio = "3.18.2"
 version-catalog-update = "1.1.1"
 
@@ -11,6 +12,7 @@ version-catalog-update = "1.1.1"
 clikt-core = { module = "com.github.ajalt.clikt:clikt-core", version.ref = "clikt" }
 kmp-process = { module = "io.matthewnelson.kmp-process:process", version.ref = "kmp-process" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+ktlint-cli = { module = "com.pinterest.ktlint:ktlint-cli", version.ref = "ktlintCli" }
 okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
 
 [plugins]
