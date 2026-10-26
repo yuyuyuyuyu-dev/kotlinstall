@@ -25,16 +25,9 @@ jobs:
         name: Checkout
         uses: actions/checkout@v7
 
-      - &setup-java
-        name: Setup Java
-        uses: actions/setup-java@v6
-        with:
-          distribution: zulu
-          java-version: "25"
-
-      - &setup-gradle
-        name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
+      - &setup-jdk-and-gradle
+        name: Set up the JDK and Gradle
+        uses: yuyuyuyuyu-dev/repo-config/.github/actions/setup-jdk-and-gradle@main
 
       # Act
       - name: Run the installer script
@@ -50,8 +43,7 @@ jobs:
     steps:
       # Arrange
       - *checkout
-      - *setup-java
-      - *setup-gradle
+      - *setup-jdk-and-gradle
 
       - &build-kotlinstall
         name: Build kotlinstall
@@ -72,8 +64,7 @@ jobs:
     steps:
       # Arrange
       - *checkout
-      - *setup-java
-      - *setup-gradle
+      - *setup-jdk-and-gradle
       - *build-kotlinstall
 
       - name: Create a repository that has kotlinstall in a subdirectory named differently from its Gradle project
@@ -116,8 +107,7 @@ jobs:
     steps:
       # Arrange
       - *checkout
-      - *setup-java
-      - *setup-gradle
+      - *setup-jdk-and-gradle
       - *build-kotlinstall
       - *install-program
 
@@ -140,8 +130,7 @@ jobs:
     steps:
       # Arrange
       - *checkout
-      - *setup-java
-      - *setup-gradle
+      - *setup-jdk-and-gradle
       - *build-kotlinstall
       - *install-program
 
@@ -172,8 +161,7 @@ jobs:
     steps:
       # Arrange
       - *checkout
-      - *setup-java
-      - *setup-gradle
+      - *setup-jdk-and-gradle
       - *build-kotlinstall
 
       - name: Create a repository of another program
@@ -285,8 +273,7 @@ jobs:
     steps:
       # Arrange
       - *checkout
-      - *setup-java
-      - *setup-gradle
+      - *setup-jdk-and-gradle
       - *build-kotlinstall
 
       # Act
@@ -305,7 +292,7 @@ jobs:
     steps:
       # Arrange
       - *checkout
-      - *setup-java
+      - *setup-jdk-and-gradle
 
       # Act
       - name: Run the installer script with --help
