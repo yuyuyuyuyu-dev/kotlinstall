@@ -72,14 +72,26 @@ fun install(arguments: Iterator<String>) {
     val options = mutableListOf<String>()
     while (arguments.hasNext()) {
         when (val argument = arguments.next()) {
-            "--git" -> repository = value(arguments, argument)
+            "--git" -> {
+                repository = value(arguments, argument)
+            }
+
             "--branch", "--tag", "--rev" -> {
                 if (reference.isNotEmpty()) throw Failure("Only one of --branch, --tag and --rev can be given\n$usage")
                 reference += listOf(argument, value(arguments, argument))
             }
-            "--force" -> options += argument
-            "-h", "--help" -> return println(help)
-            else -> throw Failure("Unknown argument $argument\n$usage")
+
+            "--force" -> {
+                options += argument
+            }
+
+            "-h", "--help" -> {
+                return println(help)
+            }
+
+            else -> {
+                throw Failure("Unknown argument $argument\n$usage")
+            }
         }
     }
     val target = target()
@@ -88,12 +100,18 @@ fun install(arguments: Iterator<String>) {
         val source = File(work, "kotlinstall")
         announce("Preparing a temporary kotlinstall")
         when (reference.firstOrNull()) {
-            null -> run(null, "git", "clone", "--depth", "1", repository, source.path)
+            null -> {
+                run(null, "git", "clone", "--depth", "1", repository, source.path)
+            }
+
             "--rev" -> {
                 run(null, "git", "clone", "--no-checkout", repository, source.path)
                 run(source, "git", "checkout", "--detach", reference.last())
             }
-            else -> run(null, "git", "clone", "--depth", "1", "--branch", reference.last(), repository, source.path)
+
+            else -> {
+                run(null, "git", "clone", "--depth", "1", "--branch", reference.last(), repository, source.path)
+            }
         }
         run(source, "sh", "gradlew", "--no-daemon", "linkReleaseExecutable${target.replaceFirstChar(Char::uppercaseChar)}")
         announce("Installing kotlinstall using the temporary kotlinstall")

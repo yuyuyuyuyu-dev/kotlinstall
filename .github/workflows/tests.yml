@@ -31,16 +31,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Setup Java
-        uses: actions/setup-java@v6
-        with:
-          distribution: zulu
-          java-version: "25"
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
-        with:
-          gradle-home-cache-excludes: caches/build-cache-1
+      - name: Set up the JDK and Gradle
+        uses: yuyuyuyuyu-dev/repo-config/.github/actions/setup-jdk-and-gradle@main
 
       - name: Run tests
         run: ./gradlew allTests
@@ -52,14 +44,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Setup Java
-        uses: actions/setup-java@v6
-        with:
-          distribution: zulu
-          java-version: "25"
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
+      - name: Set up the JDK and Gradle
+        uses: yuyuyuyuyu-dev/repo-config/.github/actions/setup-jdk-and-gradle@main
 
       - name: Build kotlinstall
         run: ./gradlew linkReleaseExecutableLinuxX64
@@ -100,14 +86,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Setup Java
-        uses: actions/setup-java@v6
-        with:
-          distribution: zulu
-          java-version: "25"
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
+      - name: Set up the JDK and Gradle
+        uses: yuyuyuyuyu-dev/repo-config/.github/actions/setup-jdk-and-gradle@main
 
       - name: Build kotlinstall
         run: ./gradlew linkReleaseExecutableLinuxX64
@@ -158,14 +138,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Setup Java
-        uses: actions/setup-java@v6
-        with:
-          distribution: zulu
-          java-version: "25"
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
+      - name: Set up the JDK and Gradle
+        uses: yuyuyuyuyu-dev/repo-config/.github/actions/setup-jdk-and-gradle@main
 
       - name: Create a repository whose tag is behind its latest commit
         env:
