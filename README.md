@@ -21,12 +21,13 @@ But I still love Kotlin and could not give up on it, so I made kotlinstall.
 
 It installs programs written in Kotlin directly from GitHub.
 It clones the source code into a temporary directory and builds it, copies the result to `~/.kotlinstall/packages/<package name>/`, links `~/.kotlinstall/bin/<command name>` to it with a symbolic link, and then removes the whole temporary directory.
+On Windows, it copies the result to `~/.kotlinstall/bin/<command name>.exe` instead of linking it, because symbolic links on Windows need Developer Mode or administrator rights.
 
 ## How to use
 
 ### Requirements
 
-- macOS or Linux
+- macOS, Linux, or Windows on x64
 - Git
 - A JDK, which the installer script and `kotlinstall install` need to build programs. Tested with JDK 25.
 - Xcode, only on macOS. The Command Line Tools alone might be enough, but I have not tested that.
@@ -34,14 +35,28 @@ It clones the source code into a temporary directory and builds it, copies the r
 
 ### Install kotlinstall
 
+On macOS and Linux:
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/yuyuyuyuyu-dev/kotlinstall/main/install-kotlinstall.main.kts | kotlinr -howtorun .main.kts /dev/stdin
+```
+
+On Windows, in PowerShell:
+
+```powershell
+$script = "$env:TEMP\install-kotlinstall.main.kts"; Invoke-RestMethod https://raw.githubusercontent.com/yuyuyuyuyu-dev/kotlinstall/main/install-kotlinstall.main.kts -OutFile $script; kotlinr $script; Remove-Item $script
 ```
 
 The installer script builds kotlinstall from its source code and puts it in `~/.kotlinstall/bin`. Add that directory to `PATH`:
 
 ```bash
 export PATH="$HOME/.kotlinstall/bin:$PATH"
+```
+
+On Windows, in PowerShell:
+
+```powershell
+$env:Path = "$env:USERPROFILE\.kotlinstall\bin;$env:Path"
 ```
 
 ### Install a program
@@ -68,6 +83,12 @@ Everything kotlinstall installs, including kotlinstall itself, is in `~/.kotlins
 rm -rf ~/.kotlinstall
 ```
 
+On Windows, in PowerShell:
+
+```powershell
+Remove-Item -Recurse -Force "$env:USERPROFILE\.kotlinstall"
+```
+
 Then take `~/.kotlinstall/bin` out of `PATH`.
 
 Gradle and Kotlin/Native keep their own files, such as downloaded dependencies and compilers, in `~/.gradle` and `~/.konan`. Other tools use them too, so kotlinstall leaves them alone.
@@ -76,6 +97,8 @@ Gradle and Kotlin/Native keep their own files, such as downloaded dependencies a
 
 Only Gradle projects are supported. Kotlin Toolchain projects are not.
 Kotlin Toolchain is still in Alpha, and its `kotlin` command has the same name as the `kotlin` command of the Kotlin compiler. To support it, I would have to think about how to tell people to run the installer script on a machine that has Kotlin Toolchain. I did not feel like thinking about that, so this first version leaves Kotlin Toolchain out.
+
+Windows on Arm is not supported, because Kotlin/Native cannot build programs for it.
 
 Also, only Kotlin/Native programs are supported. Programs that run on the JVM are not.
 To support them, I would have to think about what to do when the version of Java that a program needs is not installed. I did not feel like thinking about that either, so this first version leaves them out.

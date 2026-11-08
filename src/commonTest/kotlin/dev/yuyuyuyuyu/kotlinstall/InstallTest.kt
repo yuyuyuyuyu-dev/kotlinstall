@@ -27,7 +27,7 @@ class InstallTest {
         assertEquals(0, outcome.status, "$outcome")
         assertContains(
             outcome.output,
-            "Installed hello ${revision.take(7)} (${repository.url})\n    ${sandbox.bin}/hello",
+            "Installed hello ${revision.take(7)} (${repository.url})\n    ${sandbox.bin / executable("hello")}",
         )
         assertEquals(Outcome(0, "Hello!", ""), sandbox.command("hello"))
     }
@@ -46,7 +46,7 @@ class InstallTest {
             outcome.output,
             Regex(
                 "==> Getting the source code of hello\n.*RUN: `git clone .*" +
-                    "==> Building hello\n.*RUN: `sh gradlew .*" +
+                    "==> Building hello\n.*RUN: `${Regex.escape(wrapperRun)} .*" +
                     "==> Installing hello\n",
                 RegexOption.DOT_MATCHES_ALL,
             ),
@@ -142,7 +142,7 @@ class InstallTest {
 
         // Assert
         assertEquals(0, outcome.status, "$outcome")
-        assertFalse(FileSystem.SYSTEM.exists(sandbox.bin / "hello"))
+        assertFalse(FileSystem.SYSTEM.exists(sandbox.bin / executable("hello")))
         assertEquals(Outcome(0, "2", ""), sandbox.command("greeter"))
         assertEquals(
             Outcome(0, listed("greeter", revision, repository.url, "greeter"), ""),
@@ -219,7 +219,7 @@ class InstallTest {
         assertContains(
             outcome.output,
             "Installed hello ${revision.take(7)} (${repository.url} --subdirectory=tools/hello)\n" +
-                "    ${sandbox.bin}/hello",
+                "    ${sandbox.bin / executable("hello")}",
         )
         assertEquals(Outcome(0, "Hello!", ""), sandbox.command("hello"))
         assertEquals(
@@ -270,7 +270,7 @@ class InstallTest {
     @Test
     fun `should refuse a subdirectory that leaves the repository`() {
         // Act
-        val outcome = sandbox.kotlinstall("install", "file://${sandbox.root}/hello", "--subdirectory=../hello")
+        val outcome = sandbox.kotlinstall("install", url(sandbox.root / "hello"), "--subdirectory=../hello")
 
         // Assert
         assertEquals(1, outcome.status, "$outcome")
@@ -283,7 +283,7 @@ class InstallTest {
     @Test
     fun `should refuse an absolute subdirectory`() {
         // Act
-        val outcome = sandbox.kotlinstall("install", "file://${sandbox.root}/hello", "--subdirectory=/hello")
+        val outcome = sandbox.kotlinstall("install", url(sandbox.root / "hello"), "--subdirectory=/hello")
 
         // Assert
         assertEquals(1, outcome.status, "$outcome")
@@ -326,7 +326,7 @@ class InstallTest {
     @Test
     fun `should refuse more than one of branch and tag and revision`() {
         // Act
-        val url = "file://${sandbox.root}/hello"
+        val url = url(sandbox.root / "hello")
         val outcome = sandbox.kotlinstall("install", url, "--branch=next", "--rev=0000000")
 
         // Assert
@@ -396,7 +396,7 @@ class InstallTest {
 
         // Assert
         assertEquals(0, outcome.status, "$outcome")
-        assertFalse(FileSystem.SYSTEM.exists(sandbox.bin / "second"))
+        assertFalse(FileSystem.SYSTEM.exists(sandbox.bin / executable("second")))
         assertEquals(Outcome(0, listed("tools", revision, repository.url, "first"), ""), sandbox.kotlinstall("list"))
     }
 
@@ -509,7 +509,7 @@ class InstallTest {
         val repository = sandbox.repository("hello")
         repository.program("Hello!")
         FileSystem.SYSTEM.createDirectories(sandbox.bin)
-        FileSystem.SYSTEM.write(sandbox.bin / "hello") { writeUtf8("mine") }
+        FileSystem.SYSTEM.write(sandbox.bin / executable("hello")) { writeUtf8("mine") }
 
         // Act
         val outcome = sandbox.kotlinstall("install", repository.url)
@@ -517,7 +517,7 @@ class InstallTest {
         // Assert
         assertEquals(1, outcome.status, "$outcome")
         assertContains(outcome.error.lines(), "Error: ${sandbox.bin} already has hello")
-        assertEquals("mine", FileSystem.SYSTEM.read(sandbox.bin / "hello") { readUtf8() })
+        assertEquals("mine", FileSystem.SYSTEM.read(sandbox.bin / executable("hello")) { readUtf8() })
         assertEquals(Outcome(0, "", ""), sandbox.kotlinstall("list"))
     }
 
@@ -527,7 +527,7 @@ class InstallTest {
         val repository = sandbox.repository("hello")
         repository.program("Hello!")
         FileSystem.SYSTEM.createDirectories(sandbox.bin)
-        FileSystem.SYSTEM.write(sandbox.bin / "hello") { writeUtf8("mine") }
+        FileSystem.SYSTEM.write(sandbox.bin / executable("hello")) { writeUtf8("mine") }
 
         // Act
         val outcome = sandbox.kotlinstall("install", repository.url, "--force")
@@ -543,15 +543,15 @@ class InstallTest {
         // Arrange
         val repository = sandbox.repository("hello")
         repository.program("Hello!")
-        FileSystem.SYSTEM.createDirectories(sandbox.bin / "hello")
+        FileSystem.SYSTEM.createDirectories(sandbox.bin / executable("hello"))
 
         // Act
         val outcome = sandbox.kotlinstall("install", repository.url, "--force")
 
         // Assert
         assertEquals(1, outcome.status, "$outcome")
-        assertContains(outcome.error, "Error: Cannot replace the directory ${sandbox.bin}/hello")
-        assertTrue(FileSystem.SYSTEM.metadata(sandbox.bin / "hello").isDirectory)
+        assertContains(outcome.error, "Error: Cannot replace the directory ${sandbox.bin / executable("hello")}")
+        assertTrue(FileSystem.SYSTEM.metadata(sandbox.bin / executable("hello")).isDirectory)
         assertEquals(Outcome(0, "", ""), sandbox.kotlinstall("list"))
     }
 
@@ -639,14 +639,14 @@ class InstallTest {
         // Arrange
         val repository = sandbox.repository("hello")
         repository.program("Hello!", wrapper = false)
-        val path = "${sandbox.gradle()}:${setting("PATH")}"
+        val path = "${sandbox.gradle()}$pathSeparator${setting("PATH")}"
 
         // Act
         val outcome = sandbox.kotlinstall("install", repository.url, environment = mapOf("PATH" to path))
 
         // Assert
         assertEquals(0, outcome.status, "$outcome")
-        assertContains(outcome.output, "RUN: `gradle ")
+        assertContains(outcome.output, "RUN: `$gradleRun ")
         assertEquals(Outcome(0, "Hello!", ""), sandbox.command("hello"))
     }
 
@@ -663,14 +663,14 @@ class InstallTest {
 
         // Assert
         assertEquals(1, outcome.status, "$outcome")
-        assertContains(outcome.error, Regex("Error: sh gradlew .* failed with exit code 1"))
+        assertContains(outcome.error, Regex("Error: ${Regex.escape(wrapperRun)} .* failed with exit code 1"))
         assertEquals(Outcome(0, "", ""), sandbox.kotlinstall("list"))
     }
 
     @Test
     fun `should fail when the repository cannot be cloned`() {
         // Act
-        val outcome = sandbox.kotlinstall("install", "file://${sandbox.root}/missing")
+        val outcome = sandbox.kotlinstall("install", url(sandbox.root / "missing"))
 
         // Assert
         assertEquals(1, outcome.status, "$outcome")
@@ -680,10 +680,10 @@ class InstallTest {
     @Test
     fun `should refuse a repository that cannot name a package`() {
         // Act
-        val outcome = sandbox.kotlinstall("install", "file://${sandbox.root}/.hidden")
+        val outcome = sandbox.kotlinstall("install", url(sandbox.root / ".hidden"))
 
         // Assert
-        assertEquals(Outcome(1, "", "Error: Cannot name a package after file://${sandbox.root}/.hidden"), outcome)
+        assertEquals(Outcome(1, "", "Error: Cannot name a package after ${url(sandbox.root / ".hidden")}"), outcome)
     }
 
     @Test
@@ -697,7 +697,7 @@ class InstallTest {
 
         // Assert
         assertEquals(0, outcome.status, "$outcome")
-        assertContains(outcome.output, "${sandbox.temporary}/kotlinstall-")
+        assertContains(outcome.output, "${sandbox.temporary / "kotlinstall-"}")
         assertEquals(emptyList(), sandbox.temporaryFiles())
     }
 
@@ -713,7 +713,7 @@ class InstallTest {
 
         // Assert
         assertEquals(1, outcome.status, "$outcome")
-        assertContains(outcome.output, "${sandbox.temporary}/kotlinstall-")
+        assertContains(outcome.output, "${sandbox.temporary / "kotlinstall-"}")
         assertEquals(emptyList(), sandbox.temporaryFiles())
     }
 
@@ -730,12 +730,15 @@ class InstallTest {
             sandbox.kotlinstall(
                 "install",
                 repository.url,
-                environment = buildCaches() + mapOf("KOTLINSTALL_HOME" to null, "HOME" to user.toString()),
+                environment = buildCaches() + mapOf("KOTLINSTALL_HOME" to null, homeVariable to user.toString()),
             )
 
         // Assert
         assertEquals(0, outcome.status, "$outcome")
-        assertEquals(Outcome(0, "Hello!", ""), launch(listOf("$user/.kotlinstall/bin/hello"), sandbox.root))
+        assertEquals(
+            Outcome(0, "Hello!", ""),
+            launch(listOf((user / ".kotlinstall" / "bin" / executable("hello")).toString()), sandbox.root),
+        )
     }
 
     @Test

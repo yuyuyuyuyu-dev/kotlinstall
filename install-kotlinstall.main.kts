@@ -3,6 +3,7 @@ import java.io.IOException
 import java.nio.file.Files
 import kotlin.system.exitProcess
 
+val windows = System.getProperty("os.name").startsWith("Windows")
 val usage = "Usage: install-kotlinstall.main.kts [<options>]"
 val help = "$usage\n\nOptions:\n  -h, --help  Show this message and exit"
 
@@ -51,7 +52,11 @@ fun value(
 fun bin(): File {
     val home =
         System.getenv("KOTLINSTALL_HOME")?.takeIf { it.isNotBlank() }
-            ?: "${System.getenv("HOME")?.takeIf { it.isNotBlank() } ?: System.getProperty("user.home")}/.kotlinstall"
+            ?: File(
+                System.getenv(if (windows) "USERPROFILE" else "HOME")?.takeIf { it.isNotBlank() }
+                    ?: System.getProperty("user.home"),
+                ".kotlinstall",
+            ).path
     return File(home, "bin").absoluteFile.normalize()
 }
 
@@ -62,6 +67,7 @@ fun target(): String {
         os.startsWith("Mac") && arch in setOf("aarch64", "arm64") -> "macosArm64"
         os.startsWith("Mac") && arch in setOf("x86_64", "amd64") -> "macosX64"
         os.startsWith("Linux") && arch in setOf("x86_64", "amd64") -> "linuxX64"
+        windows && arch in setOf("x86_64", "amd64") -> "mingwX64"
         else -> throw Failure("Kotlin/Native cannot build programs on this host")
     }
 }
@@ -113,11 +119,12 @@ fun install(arguments: Iterator<String>) {
                 run(null, "git", "clone", "--depth", "1", "--branch", reference.last(), repository, source.path)
             }
         }
-        run(source, "sh", "gradlew", "--no-daemon", "linkReleaseExecutable${target.replaceFirstChar(Char::uppercaseChar)}")
+        val gradlew = if (windows) arrayOf("cmd", "/c", "gradlew.bat") else arrayOf("sh", "gradlew")
+        run(source, *gradlew, "--no-daemon", "linkReleaseExecutable${target.replaceFirstChar(Char::uppercaseChar)}")
         announce("Installing kotlinstall using the temporary kotlinstall")
         run(
             null,
-            File(source, "build/bin/$target/releaseExecutable/kotlinstall.kexe").path,
+            File(source, "build/bin/$target/releaseExecutable/kotlinstall.${if (windows) "exe" else "kexe"}").path,
             "install",
             repository,
             *listOfNotNull(reference.takeIf { it.isNotEmpty() }?.joinToString("=")).toTypedArray(),
@@ -131,10 +138,11 @@ fun install(arguments: Iterator<String>) {
     if (System
             .getenv("PATH")
             .orEmpty()
-            .split(':')
+            .split(File.pathSeparatorChar)
             .none { it.isNotEmpty() && File(it).absoluteFile.normalize() == bin }
     ) {
-        System.err.println("\nWarning: $bin is not in PATH. Add it to run the installed commands, for example: export PATH=\"$bin:\$PATH\"")
+        val example = if (windows) "\$env:Path = \"$bin;\$env:Path\"" else "export PATH=\"$bin:\$PATH\""
+        System.err.println("\nWarning: $bin is not in PATH. Add it to run the installed commands, for example: $example")
     }
 }
 

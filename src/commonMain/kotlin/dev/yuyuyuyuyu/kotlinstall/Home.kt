@@ -79,6 +79,9 @@ class Home(
     val root: Path = absolute(root)
     val bin: Path = this.root / "bin"
     val packages: Path = this.root / "packages"
+    private val trash = Trash(this.root / ".trash")
+
+    fun command(name: String) = bin / "$name$executableSuffix"
 
     fun receipt(name: String) = Receipt.read(packages / name)
 
@@ -94,20 +97,22 @@ class Home(
         }
 
     fun owner(command: String): String? {
-        val link = files.metadataOrNull(bin / command)?.symlinkTarget ?: return null
-        val target = bin.resolve(link, normalize = true).segments
-        val prefix = packages.segments
-        return if (target.size > prefix.size && target.take(prefix.size) == prefix) target[prefix.size] else null
+        val file = command(command)
+        if (files.metadataOrNull(file) == null) return null
+        return receipts().map { it.name }.firstOrNull { isCommandOf(file, executable(packages / it, command)) }
     }
 
     fun conflicts(
         name: String,
         commands: Collection<String>,
-    ) = commands.filter { files.exists(bin / it) && owner(it) != name }
+    ) = commands.filter { files.exists(command(it)) && owner(it) != name }
 
     fun <T> lock(action: () -> T): T {
         files.createDirectories(root)
-        return withLock(root / ".lock", action)
+        return withLock(root / ".lock") {
+            trash.empty()
+            action()
+        }
     }
 
     fun stage(name: String): Path {
@@ -118,11 +123,10 @@ class Home(
     fun install(
         receipt: Receipt,
         staging: Path,
-        targets: Map<String, Path>,
     ) {
         receipt.write(staging)
         files.createDirectories(bin)
-        targets.keys.forEach { release(it, receipt.name) }
+        receipt.commands.forEach { release(it, receipt.name) }
         receipt(receipt.name)?.commands?.forEach { unlink(it, receipt.name) }
         val directory = packages / receipt.name
         val previous =
@@ -132,9 +136,7 @@ class Home(
                 null
             }
         files.atomicMove(staging, directory)
-        targets.forEach { (command, target) ->
-            files.createSymlink(bin / command, (directory / target).relativeTo(bin))
-        }
+        receipt.commands.forEach { putCommand(command(it), executable(directory, it)) }
         previous?.let { files.deleteRecursively(it) }
     }
 
@@ -149,7 +151,7 @@ class Home(
         name: String,
     ): Boolean {
         if (owner(command) != name) return false
-        files.delete(bin / command)
+        trash.discard(command(command))
         return true
     }
 
@@ -157,12 +159,12 @@ class Home(
         command: String,
         name: String,
     ) {
-        val link = bin / command
-        val metadata = files.metadataOrNull(link)
+        val file = command(command)
+        val metadata = files.metadataOrNull(file)
         val owner = owner(command)
         if (metadata == null || owner == name) return
-        if (metadata.isDirectory) fail("Cannot replace the directory $link")
-        files.delete(link)
+        if (metadata.isDirectory) fail("Cannot replace the directory $file")
+        trash.discard(file)
         val receipt = owner?.let(::receipt) ?: return
         val commands = receipt.commands - command
         if (commands.isEmpty()) {
@@ -176,3 +178,8 @@ class Home(
         fun current() = Home(environment("KOTLINSTALL_HOME")?.toPath() ?: (userHome() / ".kotlinstall"))
     }
 }
+
+fun executable(
+    directory: Path,
+    command: String,
+) = directory / "native" / "$command$executableSuffix"

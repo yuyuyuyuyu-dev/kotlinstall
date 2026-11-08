@@ -2,7 +2,6 @@ package dev.yuyuyuyuyu.kotlinstall
 
 import okio.FileSystem
 import okio.Path
-import okio.Path.Companion.toPath
 
 class Installer(
     private val home: Home,
@@ -44,7 +43,12 @@ class Installer(
     }
 
     private fun directoryName(source: String): String {
-        val name = source.substringAfterLast('/').substringAfterLast(':').removeSuffix(".git")
+        val name =
+            source
+                .substringAfterLast('/')
+                .substringAfterLast(Path.DIRECTORY_SEPARATOR)
+                .substringAfterLast(':')
+                .removeSuffix(".git")
         if (!isPackageName(name)) fail("Cannot name a package after $source")
         return name
     }
@@ -97,7 +101,8 @@ class Installer(
         }
         val staging = home.stage(receipt.name)
         try {
-            home.install(receipt, staging, commands.mapValues { (_, command) -> stage(staging, command) })
+            commands.values.forEach { stage(staging, it) }
+            home.install(receipt, staging)
             if (previous != null && previous.name != receipt.name) home.receipt(previous.name)?.let(home::uninstall)
         } finally {
             files.deleteRecursively(staging)
@@ -107,16 +112,15 @@ class Installer(
     private fun stage(
         staging: Path,
         command: Command,
-    ): Path {
-        val file = "native".toPath() / command.name
-        files.createDirectories(staging / "native")
-        files.copy(command.file, staging / file)
-        setMode(staging / file, "755")
-        return file
+    ) {
+        val file = executable(staging, command.name)
+        files.createDirectories(file.parent!!)
+        files.copy(command.file, file)
+        setMode(file, "755")
     }
 
     private fun report(receipt: Receipt) {
         inform("Installed $receipt")
-        receipt.commands.forEach { inform("    ${home.bin / it}") }
+        receipt.commands.forEach { inform("    ${home.command(it)}") }
     }
 }

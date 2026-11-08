@@ -24,8 +24,8 @@ class UninstallTest {
         val outcome = sandbox.kotlinstall("uninstall", "hello")
 
         // Assert
-        assertEquals(Outcome(0, "Removed ${sandbox.bin}/hello\nUninstalled hello", ""), outcome)
-        assertFalse(FileSystem.SYSTEM.exists(sandbox.bin / "hello"))
+        assertEquals(Outcome(0, "Removed ${sandbox.bin / executable("hello")}\nUninstalled hello", ""), outcome)
+        assertFalse(FileSystem.SYSTEM.exists(sandbox.bin / executable("hello")))
         assertEquals(Outcome(0, "", ""), sandbox.kotlinstall("list"))
     }
 
@@ -79,15 +79,15 @@ class UninstallTest {
         val repository = sandbox.repository("hello")
         repository.program("Hello!")
         sandbox.install(repository.url)
-        FileSystem.SYSTEM.delete(sandbox.bin / "hello")
-        FileSystem.SYSTEM.write(sandbox.bin / "hello") { writeUtf8("mine") }
+        FileSystem.SYSTEM.delete(sandbox.bin / executable("hello"))
+        FileSystem.SYSTEM.write(sandbox.bin / executable("hello")) { writeUtf8("mine") }
 
         // Act
         val outcome = sandbox.kotlinstall("uninstall", "hello")
 
         // Assert
         assertEquals(Outcome(0, "Uninstalled hello", ""), outcome)
-        assertEquals("mine", FileSystem.SYSTEM.read(sandbox.bin / "hello") { readUtf8() })
+        assertEquals("mine", FileSystem.SYSTEM.read(sandbox.bin / executable("hello")) { readUtf8() })
     }
 
     @Test
@@ -103,8 +103,11 @@ class UninstallTest {
         val outcome = sandbox.command("kotlinstall", "uninstall", "kotlinstall")
 
         // Assert
-        assertEquals(Outcome(0, "Removed ${sandbox.bin}/kotlinstall\nUninstalled kotlinstall", ""), outcome)
-        assertFalse(FileSystem.SYSTEM.exists(sandbox.bin / "kotlinstall"))
+        assertEquals(
+            Outcome(0, "Removed ${sandbox.bin / executable("kotlinstall")}\nUninstalled kotlinstall", ""),
+            outcome,
+        )
+        assertFalse(FileSystem.SYSTEM.exists(sandbox.bin / executable("kotlinstall")))
         assertEquals(Outcome(0, "Hello!", ""), sandbox.command("hello"))
         assertEquals(Outcome(0, listed("hello", revision, repository.url, "hello"), ""), sandbox.kotlinstall("list"))
     }

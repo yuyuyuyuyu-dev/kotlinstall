@@ -12,6 +12,7 @@ enum class Host(
     MACOS_ARM64("macos_arm64", "macosArm64"),
     MACOS_X64("macos_x64", "macosX64"),
     LINUX_X64("linux_x64", "linuxX64"),
+    MINGW_X64("mingw_x64", "mingwX64"),
     ;
 
     companion object {
@@ -21,6 +22,7 @@ enum class Host(
                 OsFamily.MACOSX to CpuArchitecture.ARM64 -> MACOS_ARM64
                 OsFamily.MACOSX to CpuArchitecture.X64 -> MACOS_X64
                 OsFamily.LINUX to CpuArchitecture.X64 -> LINUX_X64
+                OsFamily.WINDOWS to CpuArchitecture.X64 -> MINGW_X64
                 else -> null
             }
     }

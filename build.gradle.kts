@@ -1,5 +1,6 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.plugin.getKotlinPluginVersion
 import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
 import org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeTest
@@ -22,11 +23,24 @@ ktlint {
 }
 
 kotlin {
+    @OptIn(ExperimentalKotlinGradlePluginApi::class)
+    applyDefaultHierarchyTemplate {
+        common {
+            group("native") {
+                group("unix") {
+                    withApple()
+                    withLinux()
+                }
+            }
+        }
+    }
+
     val host =
         when (HostManager.host) {
             KonanTarget.MACOS_ARM64 -> macosArm64()
             KonanTarget.MACOS_X64 -> macosX64()
             KonanTarget.LINUX_X64 -> linuxX64()
+            KonanTarget.MINGW_X64 -> mingwX64()
             else -> error("Kotlin/Native cannot build kotlinstall on this host")
         }
     host.binaries.executable {
@@ -37,10 +51,12 @@ kotlin {
         commonMain.dependencies {
             implementation(libs.clikt.core)
             implementation(libs.okio)
-            implementation(libs.kmp.process)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+        }
+        findByName("unixMain")?.dependencies {
+            implementation(libs.kmp.process)
         }
     }
 

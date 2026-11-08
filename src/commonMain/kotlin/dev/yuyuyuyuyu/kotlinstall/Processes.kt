@@ -1,82 +1,34 @@
 package dev.yuyuyuyuyu.kotlinstall
 
-import io.matthewnelson.kmp.file.IOException
-import io.matthewnelson.kmp.file.toFile
-import io.matthewnelson.kmp.process.Process
-import io.matthewnelson.kmp.process.Stdio
-import io.matthewnelson.kmp.process.changeDir
 import okio.Path
-import platform.posix.usleep
-import kotlin.concurrent.atomics.AtomicInt
-import kotlin.concurrent.atomics.ExperimentalAtomicApi
-import kotlin.concurrent.atomics.incrementAndFetch
 
 fun execute(
     command: List<String>,
     directory: Path? = null,
 ) {
-    val process = start(command, directory, Stdio.Inherit, Stdio.Inherit)
-    val status =
-        try {
-            process.waitFor()
-        } finally {
-            process.destroy()
-        }
-    verify(command, status)
+    inform("\nRUN: `${commandLine(command)}`")
+    verify(command, spawn(command, directory, null))
 }
 
-@OptIn(ExperimentalAtomicApi::class)
 fun capture(
     command: List<String>,
     directory: Path? = null,
 ): String {
+    inform("\nRUN: `${commandLine(command)}`")
     val output = StringBuilder()
-    val closed = AtomicInt(0)
-    val process = start(command, directory, Stdio.Null, Stdio.Pipe)
-    val status =
-        try {
-            process
-                .stdoutFeed { line -> if (line == null) closed.incrementAndFetch() else output.appendLine(line) }
-                .stderrFeed { line -> if (line == null) closed.incrementAndFetch() else printError(line) }
-                .waitFor()
-                .also { while (closed.load() < 2) usleep(1000u) }
-        } finally {
-            process.destroy()
-        }
+    val status = spawn(command, directory, output)
     print(output)
     verify(command, status)
     return output.toString()
 }
 
-private fun start(
+expect fun commandLine(command: List<String>): String
+
+expect fun spawn(
     command: List<String>,
     directory: Path?,
-    input: Stdio,
-    output: Stdio,
-): Process {
-    inform("\nRUN: `${command.joinToString(" ", transform = ::quote)}`")
-    return try {
-        Process
-            .Builder(command.first())
-            .args(command.drop(1))
-            .changeDir(directory?.toString()?.toFile())
-            .stdin(input)
-            .stdout(output)
-            .stderr(output)
-            .createProcess()
-    } catch (e: IOException) {
-        fail("Could not run ${command.first()}: ${e.message}")
-    }
-}
-
-private fun quote(argument: String) =
-    if (argument.isNotEmpty() &&
-        argument.all { it.isLetterOrDigit() || it in "%+,-./:=@_" }
-    ) {
-        argument
-    } else {
-        "'" + argument.replace("'", "'\\''") + "'"
-    }
+    output: StringBuilder?,
+): Int
 
 private fun verify(
     command: List<String>,
