@@ -32,7 +32,11 @@ fun lastError(): String {
                 0u,
                 null,
             )
-        val text = message.value?.takeIf { length > 0u }?.toKStringFromUtf16()?.trim()
+        val text =
+            message.value
+                ?.takeIf { length > 0u }
+                ?.toKStringFromUtf16()
+                ?.trim()
         LocalFree(message.value)
         text ?: "error $code"
     }

@@ -10,7 +10,6 @@ import okio.Path
 import platform.windows.GetEnvironmentVariableW
 import platform.windows.WCHARVar
 
-
 actual val homeVariable = "USERPROFILE"
 
 actual val temporaryVariables = listOf("TMP", "TEMP")
