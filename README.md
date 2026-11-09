@@ -98,10 +98,10 @@ Gradle and Kotlin/Native keep their own files, such as downloaded dependencies a
 Only Gradle projects are supported. Kotlin Toolchain projects are not.
 Kotlin Toolchain is still in Alpha, and its `kotlin` command has the same name as the `kotlin` command of the Kotlin compiler. To support it, I would have to think about how to tell people to run the installer script on a machine that has Kotlin Toolchain. I did not feel like thinking about that, so this first version leaves Kotlin Toolchain out.
 
-Windows on Arm is not supported, because Kotlin/Native cannot build programs for it.
-
 Also, only Kotlin/Native programs are supported. Programs that run on the JVM are not.
 To support them, I would have to think about what to do when the version of Java that a program needs is not installed. I did not feel like thinking about that either, so this first version leaves them out.
+
+Because of that, Windows on Arm is not supported either. Kotlin/Native cannot build programs on it.
 
 ## License
 
