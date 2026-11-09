@@ -3,7 +3,7 @@ plugins {
 }
 
 kotlin {
-    macosArm64 {
-        binaries.executable()
+    listOf(macosArm64(), linuxX64(), mingwX64()).forEach { target ->
+        target.binaries.executable()
     }
 }

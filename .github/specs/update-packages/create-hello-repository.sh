@@ -4,7 +4,7 @@ set -euo pipefail
 repository="$1"
 
 cp -R "$(dirname "$0")/hello" "$repository"
-cp "$GITHUB_WORKSPACE/gradlew" "$repository/"
+cp "$GITHUB_WORKSPACE/gradlew" "$GITHUB_WORKSPACE/gradlew.bat" "$repository/"
 cp -R "$GITHUB_WORKSPACE/gradle" "$repository/"
 cd "$repository"
 git init --quiet --initial-branch main
