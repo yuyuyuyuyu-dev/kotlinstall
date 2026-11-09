@@ -22,6 +22,8 @@ fun isRegularFile(path: Path) = metadata(path)?.isRegularFile == true
 
 private fun metadata(path: Path) = runCatching { files.metadata(files.canonicalize(path)) }.getOrNull()
 
+expect fun deleteTree(path: Path)
+
 expect fun createTemporaryDirectory(
     parent: Path,
     prefix: String,

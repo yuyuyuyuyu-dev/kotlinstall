@@ -22,6 +22,8 @@ actual fun url(directory: Path) = "file://$directory"
 
 actual fun pathExample(bin: Path) = "export PATH=\"$bin:\$PATH\""
 
+actual fun removeDirectory(directory: Path) = FileSystem.SYSTEM.deleteRecursively(directory)
+
 actual fun writeGradle(
     directory: Path,
     project: Path,

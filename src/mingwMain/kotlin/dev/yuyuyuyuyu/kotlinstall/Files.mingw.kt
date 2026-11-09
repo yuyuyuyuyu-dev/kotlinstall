@@ -20,10 +20,19 @@ import platform.windows.LOCKFILE_EXCLUSIVE_LOCK
 import platform.windows.LockFileEx
 import platform.windows.OPEN_ALWAYS
 import platform.windows.OVERLAPPED
+import platform.windows.SetFileAttributesW
 import kotlin.random.Random
 
 private const val UNIQUE_LENGTH = 6
 private val unique = ('A'..'Z') + ('a'..'z') + ('0'..'9')
+
+@OptIn(ExperimentalForeignApi::class)
+actual fun deleteTree(path: Path) {
+    if (isDirectory(path)) {
+        files.listRecursively(path).forEach { SetFileAttributesW(it.toString(), FILE_ATTRIBUTE_NORMAL.convert()) }
+    }
+    files.deleteRecursively(path)
+}
 
 @OptIn(ExperimentalForeignApi::class)
 actual fun createTemporaryDirectory(

@@ -20,6 +20,8 @@ import platform.posix.flock
 import platform.posix.mkdtemp
 import platform.posix.open
 
+actual fun deleteTree(path: Path) = files.deleteRecursively(path)
+
 @OptIn(ExperimentalForeignApi::class)
 actual fun createTemporaryDirectory(
     parent: Path,

@@ -132,6 +132,7 @@ fun install(arguments: Iterator<String>) {
         )
     } finally {
         announce("Cleaning up the work directory")
+        work.walk().forEach { it.setWritable(true) }
         if (work.deleteRecursively()) println("Removed $work") else System.err.println("\nWarning: Could not remove $work")
     }
     val bin = bin()

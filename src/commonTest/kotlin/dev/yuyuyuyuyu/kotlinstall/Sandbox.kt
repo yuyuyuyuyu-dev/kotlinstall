@@ -105,7 +105,7 @@ class Sandbox {
             .map { it.name }
             .filter { it.startsWith("kotlinstall-") }
 
-    fun delete() = FileSystem.SYSTEM.deleteRecursively(root)
+    fun delete() = removeDirectory(root)
 }
 
 val project: Path get() = setting("KOTLINSTALL_TEST_PROJECT").toPath()

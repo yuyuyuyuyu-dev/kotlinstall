@@ -20,6 +20,8 @@ expect fun url(directory: Path): String
 
 expect fun pathExample(bin: Path): String
 
+expect fun removeDirectory(directory: Path)
+
 expect fun writeGradle(
     directory: Path,
     project: Path,

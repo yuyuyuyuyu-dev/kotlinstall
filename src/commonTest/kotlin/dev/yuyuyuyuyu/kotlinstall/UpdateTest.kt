@@ -178,7 +178,7 @@ class UpdateTest {
         val second = sandbox.repository("second")
         second.program("second 1")
         sandbox.install(second.url)
-        FileSystem.SYSTEM.deleteRecursively(first.directory)
+        removeDirectory(first.directory)
         second.program("second 2")
 
         // Act

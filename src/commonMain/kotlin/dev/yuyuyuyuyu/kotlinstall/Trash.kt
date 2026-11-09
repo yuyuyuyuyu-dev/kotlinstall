@@ -17,7 +17,7 @@ class Trash(
 
     fun empty() {
         if (!isDirectory(directory)) return
-        files.list(directory).forEach { runCatching { files.deleteRecursively(it) } }
+        files.list(directory).forEach { runCatching { deleteTree(it) } }
         runCatching { files.delete(directory) }
     }
 }

@@ -2,12 +2,15 @@ package dev.yuyuyuyuyu.kotlinstall
 
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.allocArray
+import kotlinx.cinterop.convert
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.toKStringFromUtf16
 import kotlinx.cinterop.value
 import okio.FileSystem
 import okio.Path
+import platform.windows.FILE_ATTRIBUTE_NORMAL
 import platform.windows.GetEnvironmentVariableW
+import platform.windows.SetFileAttributesW
 import platform.windows.WCHARVar
 
 actual val homeVariable = "USERPROFILE"
@@ -35,6 +38,16 @@ actual fun executable(name: String) = "$name.exe"
 actual fun url(directory: Path) = "file:///${directory.toString().replace('\\', '/')}"
 
 actual fun pathExample(bin: Path) = "\$env:Path = \"$bin;\$env:Path\""
+
+@OptIn(ExperimentalForeignApi::class)
+actual fun removeDirectory(directory: Path) {
+    if (FileSystem.SYSTEM.metadataOrNull(directory)?.isDirectory == true) {
+        FileSystem.SYSTEM.listRecursively(directory).forEach {
+            SetFileAttributesW(it.toString(), FILE_ATTRIBUTE_NORMAL.convert())
+        }
+    }
+    FileSystem.SYSTEM.deleteRecursively(directory)
+}
 
 actual fun writeGradle(
     directory: Path,

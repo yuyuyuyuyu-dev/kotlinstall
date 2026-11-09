@@ -38,7 +38,7 @@ class Installer(
             home.lock { place(receipt, previous, commands) }
             report(receipt)
         } finally {
-            files.deleteRecursively(work)
+            deleteTree(work)
         }
     }
 
@@ -105,7 +105,7 @@ class Installer(
             home.install(receipt, staging)
             if (previous != null && previous.name != receipt.name) home.receipt(previous.name)?.let(home::uninstall)
         } finally {
-            files.deleteRecursively(staging)
+            deleteTree(staging)
         }
     }
 

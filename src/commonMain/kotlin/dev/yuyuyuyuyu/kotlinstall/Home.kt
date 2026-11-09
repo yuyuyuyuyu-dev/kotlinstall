@@ -137,12 +137,12 @@ class Home(
             }
         files.atomicMove(staging, directory)
         receipt.commands.forEach { putCommand(command(it), executable(directory, it)) }
-        previous?.let { files.deleteRecursively(it) }
+        previous?.let { deleteTree(it) }
     }
 
     fun uninstall(receipt: Receipt): List<String> {
         val removed = receipt.commands.filter { unlink(it, receipt.name) }
-        files.deleteRecursively(packages / receipt.name)
+        deleteTree(packages / receipt.name)
         return removed
     }
 
@@ -168,7 +168,7 @@ class Home(
         val receipt = owner?.let(::receipt) ?: return
         val commands = receipt.commands - command
         if (commands.isEmpty()) {
-            files.deleteRecursively(packages / owner)
+            deleteTree(packages / owner)
         } else {
             receipt.copy(commands = commands).write(packages / owner)
         }
