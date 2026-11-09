@@ -19,9 +19,6 @@ defaults:
   run:
     shell: bash
 
-env:
-  MSYS_NO_PATHCONV: "1"
-
 jobs:
   install-kotlinstall:
     name: should install kotlinstall with the installer script on ${{ matrix.host.name }}
@@ -33,16 +30,19 @@ jobs:
           - name: Linux x64
             runner: ubuntu-latest
             target: linuxX64
+            link: linkReleaseExecutableLinuxX64
             extension: kexe
             suffix: ""
           - name: macOS Apple silicon
             runner: macos-latest
             target: macosArm64
+            link: linkReleaseExecutableMacosArm64
             extension: kexe
             suffix: ""
           - name: Windows x64
             runner: windows-latest
             target: mingwX64
+            link: linkReleaseExecutableMingwX64
             extension: exe
             suffix: .exe
     steps:
@@ -103,7 +103,7 @@ jobs:
 
       - &build-kotlinstall
         name: Build kotlinstall
-        run: ./gradlew linkReleaseExecutable${{ matrix.host.target }}
+        run: ./gradlew ${{ matrix.host.link }}
 
       # Act
       - &install-program
