@@ -30,7 +30,7 @@ On Windows, it copies the result to `~/.kotlinstall/bin/<command name>.exe` inst
 - macOS, Linux, or Windows on x64
 - Git
 - A JDK, which the installer script and `kotlinstall install` need to build programs. Tested with JDK 25.
-- Xcode, only on macOS. The Command Line Tools alone might be enough, but I have not tested that.
+- Xcode, only on macOS. The Command Line Tools alone are not enough, because Kotlin/Native cannot build programs without Xcode.
 - The Kotlin compiler with its `kotlinr` command, only to run the installer script
 
 ### Install kotlinstall
