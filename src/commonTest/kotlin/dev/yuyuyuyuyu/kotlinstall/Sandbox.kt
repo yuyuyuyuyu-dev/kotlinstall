@@ -1,9 +1,5 @@
 package dev.yuyuyuyuyu.kotlinstall
 
-import io.matthewnelson.kmp.file.toFile
-import io.matthewnelson.kmp.process.Process
-import io.matthewnelson.kmp.process.Stdio
-import io.matthewnelson.kmp.process.changeDir
 import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
@@ -36,15 +32,15 @@ class Sandbox {
     val temporary: Path = root / "temporary"
 
     private val defaults =
-        mapOf(
-            "KOTLINSTALL_HOME" to home.toString(),
-            "TMPDIR" to temporary.toString(),
-            // kotlinstall builds and installs programs written in Kotlin, so the tests have to build many times.
-            // We could not put up with that without the build cache.
-            "GRADLE_OPTS" to
-                listOfNotNull(Process.Current.environment()["GRADLE_OPTS"], "-Dorg.gradle.caching=true")
-                    .joinToString(" "),
-        )
+        mapOf("KOTLINSTALL_HOME" to home.toString()) +
+            temporaryVariables.associateWith { temporary.toString() } +
+            mapOf(
+                // kotlinstall builds and installs programs written in Kotlin, so the tests have to build many times.
+                // We could not put up with that without the build cache.
+                "GRADLE_OPTS" to
+                    listOfNotNull(variable("GRADLE_OPTS"), "-Dorg.gradle.caching=true")
+                        .joinToString(" "),
+            )
 
     init {
         FileSystem.SYSTEM.createDirectories(temporary)
@@ -65,17 +61,17 @@ class Sandbox {
         vararg arguments: String,
         environment: Map<String, String?> = emptyMap(),
     ): Outcome =
-        launch(
-            listOf("kotlinr", "-howtorun", ".main.kts", "/dev/stdin") + arguments,
+        runInstaller(
+            FileSystem.SYSTEM.read(project / "install-kotlinstall.main.kts") { readUtf8() },
+            arguments.toList(),
             root,
             defaults + environment,
-            FileSystem.SYSTEM.read(project / "install-kotlinstall.main.kts") { readUtf8() },
         )
 
     fun command(
         name: String,
         vararg arguments: String,
-    ): Outcome = launch(listOf((bin / name).toString()) + arguments, root, defaults)
+    ): Outcome = launch(listOf((bin / executable(name)).toString()) + arguments, root, defaults)
 
     fun repository(
         name: String,
@@ -99,10 +95,7 @@ class Sandbox {
     fun gradle(): Path {
         val directory = root / "gradle"
         FileSystem.SYSTEM.createDirectories(directory)
-        FileSystem.SYSTEM.write(directory / "gradle") {
-            writeUtf8("#!/bin/sh\nexec sh '${project / "gradlew"}' \"\$@\"\n")
-        }
-        launch(listOf("chmod", "755", (directory / "gradle").toString()), root)
+        writeGradle(directory, project)
         return directory
     }
 
@@ -112,42 +105,17 @@ class Sandbox {
             .map { it.name }
             .filter { it.startsWith("kotlinstall-") }
 
-    fun delete() = FileSystem.SYSTEM.deleteRecursively(root)
+    fun delete() = removeDirectory(root)
 }
 
 val project: Path get() = setting("KOTLINSTALL_TEST_PROJECT").toPath()
 
-fun setting(name: String): String = Process.Current.environment()[name] ?: fail("$name is not set")
+fun setting(name: String): String = variable(name) ?: fail("$name is not set")
 
 fun buildCaches(): Map<String, String> {
-    val environment = Process.Current.environment()
-    val home = environment.getValue("HOME")
+    val home = setting(homeVariable).toPath()
     return mapOf(
-        "GRADLE_USER_HOME" to (environment["GRADLE_USER_HOME"] ?: "$home/.gradle"),
-        "KONAN_DATA_DIR" to (environment["KONAN_DATA_DIR"] ?: "$home/.konan"),
+        "GRADLE_USER_HOME" to (variable("GRADLE_USER_HOME") ?: (home / ".gradle").toString()),
+        "KONAN_DATA_DIR" to (variable("KONAN_DATA_DIR") ?: (home / ".konan").toString()),
     )
-}
-
-fun launch(
-    command: List<String>,
-    directory: Path,
-    environment: Map<String, String?> = emptyMap(),
-    input: String? = null,
-): Outcome {
-    val result =
-        Process
-            .Builder(command.first())
-            .args(command.drop(1))
-            .changeDir(directory.toString().toFile())
-            .environment {
-                environment.forEach { (name, value) -> if (value == null) remove(name) else put(name, value) }
-            }.stdin(if (input == null) Stdio.Null else Stdio.Pipe)
-            .createOutput {
-                timeoutMillis = 30 * 60 * 1000
-                if (input != null) inputUtf8 { input }
-            }
-    result.processError?.let {
-        fail("${command.joinToString(" ")} did not finish: $it\n${result.stdout}\n${result.stderr}")
-    }
-    return Outcome(result.processInfo.exitCode, result.stdout, result.stderr)
 }

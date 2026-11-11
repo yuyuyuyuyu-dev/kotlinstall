@@ -27,6 +27,8 @@ jobs:
             runner: ubuntu-latest
           - name: macOS Apple silicon
             runner: macos-latest
+          - name: Windows x64
+            runner: windows-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v7

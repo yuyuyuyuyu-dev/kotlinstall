@@ -8,7 +8,7 @@ class Repository(
     val directory: Path,
 ) {
     val path: String = directory.toString()
-    val url: String = "file://$directory"
+    val url: String = url(directory)
     val head: String get() = git("rev-parse", "HEAD")
 
     init {
@@ -68,7 +68,13 @@ class Repository(
     }
 
     fun wrapper(subdirectory: String = ".") {
-        val files = listOf("gradlew", "gradle/wrapper/gradle-wrapper.jar", "gradle/wrapper/gradle-wrapper.properties")
+        val files =
+            listOf(
+                "gradlew",
+                "gradlew.bat",
+                "gradle/wrapper/gradle-wrapper.jar",
+                "gradle/wrapper/gradle-wrapper.properties",
+            )
         files.forEach { file ->
             val target = directory / subdirectory / file
             FileSystem.SYSTEM.createDirectories(target.parent!!)
@@ -158,7 +164,7 @@ fun buildScript(
     appendLine("}")
     appendLine()
     appendLine("kotlin {")
-    appendLine("    listOf(macosArm64(), macosX64(), linuxX64()).forEach { target ->")
+    appendLine("    listOf(macosArm64(), macosX64(), linuxX64(), mingwX64()).forEach { target ->")
     appendLine("        $binaries")
     appendLine("    }")
     appendLine("}")

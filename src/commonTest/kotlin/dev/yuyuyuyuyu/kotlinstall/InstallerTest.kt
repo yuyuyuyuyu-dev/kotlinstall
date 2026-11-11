@@ -83,7 +83,7 @@ class InstallerTest {
         // Arrange
         val source = sandbox.source()
         FileSystem.SYSTEM.createDirectories(sandbox.bin)
-        FileSystem.SYSTEM.write(sandbox.bin / "kotlinstall") { writeUtf8("mine") }
+        FileSystem.SYSTEM.write(sandbox.bin / executable("kotlinstall")) { writeUtf8("mine") }
 
         // Act
         val outcome = sandbox.installer("--git", source.url, "--force")
@@ -108,7 +108,7 @@ class InstallerTest {
         assertContains(
             outcome.error,
             "Warning: ${sandbox.bin} is not in PATH. Add it to run the installed commands, for example: " +
-                "export PATH=\"${sandbox.bin}:\$PATH\"",
+                pathExample(sandbox.bin),
         )
     }
 
@@ -116,7 +116,7 @@ class InstallerTest {
     fun `should not warn when the bin directory is in PATH`() {
         // Arrange
         val source = sandbox.source()
-        val path = "${sandbox.bin}:${setting("PATH")}"
+        val path = "${sandbox.bin}$pathSeparator${setting("PATH")}"
 
         // Act
         val outcome = sandbox.installer("--git", source.url, environment = mapOf("PATH" to path))
@@ -174,7 +174,7 @@ class InstallerTest {
     @Test
     fun `should fail when the repository cannot be cloned`() {
         // Act
-        val outcome = sandbox.installer("--git", "file://${sandbox.root}/missing")
+        val outcome = sandbox.installer("--git", url(sandbox.root / "missing"))
 
         // Assert
         assertEquals(1, outcome.status, "$outcome")
@@ -184,7 +184,7 @@ class InstallerTest {
     @Test
     fun `should remove its work directory when the installation fails`() {
         // Act
-        val outcome = sandbox.installer("--git", "file://${sandbox.root}/missing")
+        val outcome = sandbox.installer("--git", url(sandbox.root / "missing"))
 
         // Assert
         val work = Regex("Removed (.+)").find(outcome.output)?.groupValues?.get(1)

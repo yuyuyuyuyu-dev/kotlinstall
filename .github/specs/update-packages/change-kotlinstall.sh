@@ -2,5 +2,7 @@
 set -euo pipefail
 
 cd "$1"
-sed -i '' 's/"Install Kotlin\/Native programs from Git repositories"/"Updated by a new commit"/' src/commonMain/kotlin/dev/yuyuyuyuyu/kotlinstall/Kotlinstall.kt
+file=src/commonMain/kotlin/dev/yuyuyuyuyu/kotlinstall/Kotlinstall.kt
+sed -i.bak 's/"Install Kotlin\/Native programs from Git repositories"/"Updated by a new commit"/' "$file"
+rm "$file.bak"
 git commit --quiet --all --message "Change the description"

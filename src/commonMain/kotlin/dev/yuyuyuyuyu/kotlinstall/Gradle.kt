@@ -8,6 +8,8 @@ data class Build(
     val commands: List<Command>,
 )
 
+expect fun gradle(project: Path): List<String>
+
 object Gradle {
     fun isProject(directory: Path) =
         listOf("settings.gradle.kts", "settings.gradle", "build.gradle.kts", "build.gradle")
@@ -22,9 +24,8 @@ object Gradle {
         files.write(script) { writeUtf8(initScript) }
         val manifest = work / "gradle-executables.txt"
         val name = work / "gradle-project.txt"
-        val gradle = if (isRegularFile(project / "gradlew")) listOf("sh", "gradlew") else listOf("gradle")
         execute(
-            gradle +
+            gradle(project) +
                 listOf(
                     "--no-daemon",
                     "--init-script",
@@ -46,7 +47,7 @@ object Gradle {
                 .lines()
                 .filter { it.isNotBlank() }
                 .map { it.toPath() }
-                .map { Command(it.name.removeSuffix(".kexe"), it) },
+                .map { Command(it.name.substringBeforeLast('.'), it) },
         )
     }
 }

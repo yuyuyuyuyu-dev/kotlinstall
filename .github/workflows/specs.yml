@@ -15,10 +15,36 @@ concurrency:
   group: "specs-${{ github.ref }}"
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   install-kotlinstall:
-    name: should install kotlinstall with the installer script
-    runs-on: macos-latest
+    name: should install kotlinstall with the installer script on ${{ matrix.host.name }}
+    runs-on: ${{ matrix.host.runner }}
+    strategy: &hosts
+      fail-fast: false
+      matrix:
+        host: &host-list
+          - name: Linux x64
+            runner: ubuntu-latest
+            target: linuxX64
+            link: linkReleaseExecutableLinuxX64
+            extension: kexe
+            suffix: ""
+          - name: macOS Apple silicon
+            runner: macos-latest
+            target: macosArm64
+            link: linkReleaseExecutableMacosArm64
+            extension: kexe
+            suffix: ""
+          - name: Windows x64
+            runner: windows-latest
+            target: mingwX64
+            link: linkReleaseExecutableMingwX64
+            extension: exe
+            suffix: .exe
     steps:
       # Arrange
       - &checkout
@@ -29,42 +55,74 @@ jobs:
         name: Set up the JDK and Gradle
         uses: yuyuyuyuyu-dev/repo-config/.github/actions/setup-jdk-and-gradle@main
 
+      - &set-paths
+        name: Set the paths in the form that the host understands
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then
+            temporary="$(cygpath --mixed "$RUNNER_TEMP")"
+            workspace="$(cygpath --mixed "$GITHUB_WORKSPACE")"
+            {
+              echo "TEMPORARY=$temporary"
+              echo "TEMPORARY_URL=file:///$temporary"
+              echo "WORKSPACE_URL=file:///$workspace"
+            } >> "$GITHUB_ENV"
+          else
+            {
+              echo "TEMPORARY=$RUNNER_TEMP"
+              echo "TEMPORARY_URL=file://$RUNNER_TEMP"
+              echo "WORKSPACE_URL=file://$GITHUB_WORKSPACE"
+            } >> "$GITHUB_ENV"
+          fi
+
       # Act
-      - name: Run the installer script
-        run: cat install-kotlinstall.main.kts | kotlinr -howtorun .main.kts /dev/stdin --git "file://$GITHUB_WORKSPACE"
+      - name: Run the installer script as the README says for macOS and Linux
+        if: runner.os != 'Windows'
+        run: cat install-kotlinstall.main.kts | kotlinr -howtorun .main.kts /dev/stdin --git "$WORKSPACE_URL"
+
+      - name: Run the installer script as the README says for Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: kotlinr install-kotlinstall.main.kts --git $env:WORKSPACE_URL
 
       # Assert
-      - name: Run kotlinstall
-        run: ~/.kotlinstall/bin/kotlinstall --help
+      - &run-installed-kotlinstall
+        name: Run the installed kotlinstall
+        run: ~/.kotlinstall/bin/kotlinstall${{ matrix.host.suffix }} --help
 
   install-program:
-    name: should install a program written in Kotlin
-    runs-on: macos-latest
+    name: should install a program written in Kotlin on ${{ matrix.host.name }}
+    runs-on: ${{ matrix.host.runner }}
+    strategy: *hosts
+    env: &kotlinstall
+      KOTLINSTALL: build/bin/${{ matrix.host.target }}/releaseExecutable/kotlinstall.${{ matrix.host.extension }}
     steps:
       # Arrange
       - *checkout
       - *setup-jdk-and-gradle
+      - *set-paths
 
       - &build-kotlinstall
         name: Build kotlinstall
-        run: ./gradlew linkReleaseExecutableMacosArm64
+        run: ./gradlew ${{ matrix.host.link }}
 
       # Act
       - &install-program
         name: Install kotlinstall itself as the program written in Kotlin
-        run: build/bin/macosArm64/releaseExecutable/kotlinstall.kexe install "file://$GITHUB_WORKSPACE"
+        run: '"$KOTLINSTALL" install "$WORKSPACE_URL"'
 
       # Assert
-      - name: Run the installed program
-        run: ~/.kotlinstall/bin/kotlinstall --help
+      - *run-installed-kotlinstall
 
   install-program-from-subdirectory:
-    name: should install a program from a project in a subdirectory of the repository
-    runs-on: macos-latest
+    name: should install a program from a project in a subdirectory of the repository on ${{ matrix.host.name }}
+    runs-on: ${{ matrix.host.runner }}
+    strategy: *hosts
+    env: *kotlinstall
     steps:
       # Arrange
       - *checkout
       - *setup-jdk-and-gradle
+      - *set-paths
       - *build-kotlinstall
 
       - name: Create a repository that has kotlinstall in a subdirectory named differently from its Gradle project
@@ -74,86 +132,94 @@ jobs:
           GIT_COMMITTER_NAME: kotlinstall
           GIT_COMMITTER_EMAIL: kotlinstall@example.com
         run: |
-          mkdir "$RUNNER_TEMP/repository"
-          git archive --prefix=cli/ HEAD | tar -x -C "$RUNNER_TEMP/repository"
-          cd "$RUNNER_TEMP/repository"
+          mkdir "$TEMPORARY/repository"
+          git archive --prefix=cli/ HEAD | tar -x -C "$TEMPORARY/repository"
+          cd "$TEMPORARY/repository"
           git init --quiet --initial-branch main
           git add --all
           git commit --quiet --message "Add kotlinstall"
 
       # Act
       - name: Install kotlinstall from the subdirectory
-        run: build/bin/macosArm64/releaseExecutable/kotlinstall.kexe install "file://$RUNNER_TEMP/repository" --subdirectory=cli
+        run: '"$KOTLINSTALL" install "$TEMPORARY_URL/repository" --subdirectory=cli'
 
       # Assert
-      - name: Run the installed program
-        run: ~/.kotlinstall/bin/kotlinstall --help
+      - *run-installed-kotlinstall
 
       - name: Assert that the package is named after the Gradle project
         run: |
-          revision="$(git -C "$RUNNER_TEMP/repository" rev-parse HEAD | cut -c 1-7)"
-          ~/.kotlinstall/bin/kotlinstall list > "$RUNNER_TEMP/list.txt"
-          diff --unified - "$RUNNER_TEMP/list.txt" <<EOF
+          revision="$(git -C "$TEMPORARY/repository" rev-parse HEAD | cut -c 1-7)"
+          ~/.kotlinstall/bin/kotlinstall${{ matrix.host.suffix }} list | tr -d '\r' > "$TEMPORARY/list.txt"
+          diff --unified - "$TEMPORARY/list.txt" <<EOF
           package:  kotlinstall
           commands: kotlinstall
-          source:   file://$RUNNER_TEMP/repository --subdirectory=cli
+          source:   $TEMPORARY_URL/repository --subdirectory=cli
           revision: $revision
           EOF
 
   uninstall-program:
-    name: should uninstall a program written in Kotlin
+    name: should uninstall a program written in Kotlin on ${{ matrix.host.name }}
     needs: install-program
-    runs-on: macos-latest
+    runs-on: ${{ matrix.host.runner }}
+    strategy: *hosts
+    env: *kotlinstall
     steps:
       # Arrange
       - *checkout
       - *setup-jdk-and-gradle
+      - *set-paths
       - *build-kotlinstall
       - *install-program
 
       # Act
       - name: Uninstall the program
-        run: build/bin/macosArm64/releaseExecutable/kotlinstall.kexe uninstall kotlinstall
+        run: '"$KOTLINSTALL" uninstall kotlinstall'
 
       # Assert
       - name: Assert that the program is gone
         run: |
-          if [ -e ~/.kotlinstall/bin/kotlinstall ] || [ -L ~/.kotlinstall/bin/kotlinstall ]; then
+          command=~/.kotlinstall/bin/kotlinstall${{ matrix.host.suffix }}
+          if [ -e "$command" ] || [ -L "$command" ]; then
             echo '::error::the program is still installed'
             exit 1
           fi
 
   list-packages:
-    name: should list the installed packages
+    name: should list the installed packages on ${{ matrix.host.name }}
     needs: install-program
-    runs-on: macos-latest
+    runs-on: ${{ matrix.host.runner }}
+    strategy: *hosts
+    env: *kotlinstall
     steps:
       # Arrange
       - *checkout
       - *setup-jdk-and-gradle
+      - *set-paths
       - *build-kotlinstall
       - *install-program
 
       # Act
       - name: List the installed packages
-        run: build/bin/macosArm64/releaseExecutable/kotlinstall.kexe list > "$RUNNER_TEMP/list.txt"
+        run: '"$KOTLINSTALL" list | tr -d ''\r'' > "$TEMPORARY/list.txt"'
 
       # Assert
       - name: Assert that the list is the text written here
         run: |
           revision="$(git rev-parse HEAD | cut -c 1-7)"
-          diff --unified - "$RUNNER_TEMP/list.txt" <<EOF
+          diff --unified - "$TEMPORARY/list.txt" <<EOF
           package:  kotlinstall
           commands: kotlinstall
-          source:   file://$GITHUB_WORKSPACE
+          source:   $WORKSPACE_URL
           revision: $revision
           EOF
 
   update-packages:
-    name: should update kotlinstall itself and every other installed package
+    name: should update kotlinstall itself and every other installed package on ${{ matrix.host.name }}
     needs: install-program
-    runs-on: macos-latest
+    runs-on: ${{ matrix.host.runner }}
+    strategy: *hosts
     env:
+      KOTLINSTALL: build/bin/${{ matrix.host.target }}/releaseExecutable/kotlinstall.${{ matrix.host.extension }}
       GIT_AUTHOR_NAME: kotlinstall
       GIT_AUTHOR_EMAIL: kotlinstall@example.com
       GIT_COMMITTER_NAME: kotlinstall
@@ -162,61 +228,63 @@ jobs:
       # Arrange
       - *checkout
       - *setup-jdk-and-gradle
+      - *set-paths
       - *build-kotlinstall
 
       - name: Create a repository of another program
-        run: .github/specs/update-packages/create-hello-repository.sh "$RUNNER_TEMP/hello"
+        run: .github/specs/update-packages/create-hello-repository.sh "$TEMPORARY/hello"
 
       - name: Install kotlinstall and the other program
         run: |
-          build/bin/macosArm64/releaseExecutable/kotlinstall.kexe install "file://$GITHUB_WORKSPACE"
-          build/bin/macosArm64/releaseExecutable/kotlinstall.kexe install "file://$RUNNER_TEMP/hello"
+          "$KOTLINSTALL" install "$WORKSPACE_URL"
+          "$KOTLINSTALL" install "$TEMPORARY_URL/hello"
 
       - name: Add a commit that changes the description of kotlinstall
         run: .github/specs/update-packages/change-kotlinstall.sh "$GITHUB_WORKSPACE"
 
       - name: Add a commit that changes the message of the other program
-        run: .github/specs/update-packages/change-hello.sh "$RUNNER_TEMP/hello"
+        run: .github/specs/update-packages/change-hello.sh "$TEMPORARY/hello"
 
       # Act
       - name: Update every package with the installed kotlinstall
-        run: ~/.kotlinstall/bin/kotlinstall update
+        run: ~/.kotlinstall/bin/kotlinstall${{ matrix.host.suffix }} update
 
       # Assert
       - name: Assert that kotlinstall itself was updated
         run: |
-          if ! ~/.kotlinstall/bin/kotlinstall --help | grep --quiet --fixed-strings --line-regexp '  Updated by a new commit'; then
+          if ! ~/.kotlinstall/bin/kotlinstall${{ matrix.host.suffix }} --help | tr -d '\r' | grep --quiet --fixed-strings --line-regexp '  Updated by a new commit'; then
             echo '::error::kotlinstall was not updated'
             exit 1
           fi
 
       - name: Assert that the other program was updated
-        run: echo 'Hello, 2' | diff --unified - <(~/.kotlinstall/bin/hello)
+        run: echo 'Hello, 2' | diff --unified - <(~/.kotlinstall/bin/hello${{ matrix.host.suffix }} | tr -d '\r')
 
       - name: Assert that the list shows the new revisions
         run: |
-          hello="$(git -C "$RUNNER_TEMP/hello" rev-parse HEAD | cut -c 1-7)"
+          hello="$(git -C "$TEMPORARY/hello" rev-parse HEAD | cut -c 1-7)"
           kotlinstall="$(git rev-parse HEAD | cut -c 1-7)"
-          ~/.kotlinstall/bin/kotlinstall list > "$RUNNER_TEMP/list.txt"
-          diff --unified - "$RUNNER_TEMP/list.txt" <<EOF
+          ~/.kotlinstall/bin/kotlinstall${{ matrix.host.suffix }} list | tr -d '\r' > "$TEMPORARY/list.txt"
+          diff --unified - "$TEMPORARY/list.txt" <<EOF
           package:  hello
           commands: hello
-          source:   file://$RUNNER_TEMP/hello
+          source:   $TEMPORARY_URL/hello
           revision: $hello
 
           package:  kotlinstall
           commands: kotlinstall
-          source:   file://$GITHUB_WORKSPACE
+          source:   $WORKSPACE_URL
           revision: $kotlinstall
           EOF
 
   help:
-    name: should print the help with ${{ matrix.arguments }}
-    runs-on: macos-latest
+    name: should print the help with ${{ matrix.case.arguments }} on ${{ matrix.host.name }}
+    runs-on: ${{ matrix.host.runner }}
     strategy:
       fail-fast: false
       matrix:
-        include:
+        host: *host-list
+        case:
           - arguments: --help
             help: |
               Usage: kotlinstall [<options>] <command> [<args>]...
@@ -270,33 +338,43 @@ jobs:
 
               Options:
                 -h, --help  Show this message and exit
+    env: *kotlinstall
     steps:
       # Arrange
       - *checkout
       - *setup-jdk-and-gradle
+      - *set-paths
       - *build-kotlinstall
 
       # Act
-      - name: Run kotlinstall with ${{ matrix.arguments }}
-        run: build/bin/macosArm64/releaseExecutable/kotlinstall.kexe ${{ matrix.arguments }} > "$RUNNER_TEMP/help.txt"
+      - name: Run kotlinstall with ${{ matrix.case.arguments }}
+        run: '"$KOTLINSTALL" ${{ matrix.case.arguments }} | tr -d ''\r'' > "$TEMPORARY/help.txt"'
 
       # Assert
       - name: Assert that the help is the text written in this workflow
         env:
-          HELP: ${{ matrix.help }}
-        run: printf '%s' "$HELP" | diff --unified - "$RUNNER_TEMP/help.txt"
+          HELP: ${{ matrix.case.help }}
+        run: printf '%s' "$HELP" | diff --unified - "$TEMPORARY/help.txt"
 
   installer-help:
-    name: should print the help of the installer script with --help
-    runs-on: macos-latest
+    name: should print the help of the installer script with --help on ${{ matrix.host.name }}
+    runs-on: ${{ matrix.host.runner }}
+    strategy: *hosts
     steps:
       # Arrange
       - *checkout
       - *setup-jdk-and-gradle
+      - *set-paths
 
       # Act
-      - name: Run the installer script with --help
-        run: cat install-kotlinstall.main.kts | kotlinr -howtorun .main.kts /dev/stdin --help > "$RUNNER_TEMP/help.txt"
+      - name: Run the installer script with --help as the README says for macOS and Linux
+        if: runner.os != 'Windows'
+        run: cat install-kotlinstall.main.kts | kotlinr -howtorun .main.kts /dev/stdin --help > "$TEMPORARY/help.txt"
+
+      - name: Run the installer script with --help as the README says for Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: kotlinr install-kotlinstall.main.kts --help > "$env:TEMPORARY/help.txt"
 
       # Assert
       - name: Assert that the help is the text written in this workflow
@@ -306,7 +384,7 @@ jobs:
 
             Options:
               -h, --help  Show this message and exit
-        run: printf '%s' "$HELP" | diff --unified - "$RUNNER_TEMP/help.txt"
+        run: printf '%s' "$HELP" | diff --unified - <(tr -d '\r' < "$TEMPORARY/help.txt")
 
   unrelated-files:
     name: should not touch unrelated files when ${{ matrix.when }}
